@@ -148,20 +148,24 @@ console.log('primary:', toHex('oklch(0.65 0.12 110)'));
 
 If `culori` is not installed: `npm install --no-save culori`. Or hand-roll a converter (the OKLCh→sRGB math is short).
 
-Patch `docs/userguide.sty` color block — overwrite these variables:
-- `ugPrimary` ← `--primary`
-- `ugPrimaryDark` ← darker shade of primary (manually or by reducing lightness ~15%)
-- `ugSecondary` ← `--secondary` (or `--accent`)
-- `ugLightBg` ← light background tint of primary (high lightness, low chroma)
+Patch `docs/userguide.sty` color block — overwrite these variables with the target app's brand colors:
+- `ugPrimary` ← main brand color from the web app
+- `ugPrimaryDark` ← darker shade of the same brand color
+- `ugSecondary` ← secondary brand or accent color
+- `ugLightBg` ← light tint of the primary color
 - `ugTableHead` ← same as `ugPrimary` or slightly darker
 - `ugCoverGradA` / `ugCoverGradB` ← primary / primary-dark
-- `ugBorder` ← border tint
+- `ugBorder` ← border tint that matches the app
 
-**Do NOT change `ugDarkText` or `ugMutedText`.** Body text must stay neutral black/gray (`#111111` / `#6B7280`). Brand colors on body text reduces readability — user feedback on a previous run.
+Keep body text neutral:
+- `ugDarkText` remains near-black
+- `ugMutedText` remains neutral gray
+
+**Important page-layout rule:** do not let document control spill into the rest of the guide. The document control section should stand alone, then the next section begins on a new page.
 
 ---
 
-### Step 5 — Capture page screenshots
+### Step 5 — Capture screenshots by container / component
 
 Write `scripts/capture-screenshots.mjs`:
 
@@ -170,10 +174,16 @@ Write `scripts/capture-screenshots.mjs`:
 3. For each user flow:
    - Navigate to the URL (use real IDs from live data — click through to discover them)
    - `await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {})`
+   - Prefer container-sized captures: one card, one table, one sidebar block, one modal, or one form section per screenshot
+   - Avoid one huge full-page capture if it will make the document tall, cramped, or hard to read
+   - If a page has multiple visible containers, capture each important container separately and let the PDF explain them in sequence
+   - Do not add red annotation boxes to the final screenshots unless the user explicitly asks for annotated UI review images
    - For modal flows: click trigger → wait 500ms → screenshot → `Escape`
    - For forms with type variants: open modal, select each type, screenshot each separately
    - Save to `docs/screenshots/NN-descriptive-name.png` (zero-padded)
    - `console.log` each file saved
+
+When deciding what a container means, read the source code first. Use the component tree, route file, and layout files to identify the real structure and the intended label for each container before writing the explanation.
 
 Selectors:
 - Buttons: `page.getByRole('button', { name: /text/i }).first()`
@@ -191,6 +201,8 @@ ls docs/screenshots/
 ### Step 6 — Capture inline UI element screenshots
 
 For every `\ugButton{X}`, `\ugField{Y}`, `\ugMenu{Z}` planned for the section files, capture the element itself with Playwright `element.screenshot()`. These render inline in the PDF as small images instead of styled text.
+
+Prefer tight crops or component-only shots for inline UI references; do not capture a full page just to extract a single label.
 
 Build a list of every label that will be referenced. Group by type (button / field / menu).
 
@@ -224,7 +236,7 @@ async function saveMenu(page, label) {
 
 **Important:** the `\ugField{Foo}` lookup uses the **exact label string** from the source code (e.g. `<FormLabel>Foo</FormLabel>`) — not a paraphrased / user-friendly version. Capture using the same string. If the UI label is `SRS Challenge Count`, the section text should write `\ugField{SRS Challenge Count}`, not `\ugField{Review Count}`.
 
-For dynamic-text buttons (e.g. `Upload N Image(s)` where N changes), do **not** capture them — they will fall back to the original styled-text rendering, which is correct behaviour.
+For dynamic-text buttons (e.g. `Upload N Image(s)` where N changes), capture only if the label is stable enough to match in the UI. Otherwise let them fall back to styled text.
 
 ---
 
@@ -280,8 +292,21 @@ Labels with no captured PNG fall through to the `Orig` macro (styled text). This
 
 Replace each skeleton in `docs/sections/` with project-specific content. Use only template commands (full reference below).
 
+**Layout rules (non-negotiable):**
+- Document control should be a single page, followed by a new page for the rest of the guide.
+- Each major chapter must start on a new page:
+  - 1 Introduction
+  - 2 System Overview
+  - 3 Getting Started
+  - 5 Core Features
+  - 6 Common Tasks
+  - and any other large chapter the user wants separated
+- If a chapter has multiple major subsections, keep the chapter title at the top of its new page and let the subsections continue below it.
+
 **Language rules (non-negotiable):**
-- Plain English, no jargon, no internal field names, no tech terms
+- Plain English or formal Indonesian, depending on the project/user request
+- No jargon unless the app itself uses that term in the UI
+- Avoid internal field names when a user-facing label exists
 - "pop-up window" not "modal/dialog"
 - "three-dot button (…)" not "actions menu"
 - Second person ("you", "your") throughout
@@ -310,7 +335,7 @@ Replace each skeleton in `docs/sections/` with project-specific content. Use onl
 | Error table | `\begin{ugErrorTable} \ugError{msg}{cause}{fix} \end{ugErrorTable}` |
 | Best practice | `\begin{ugBestPractice}{Title} ... \end{ugBestPractice}` |
 
-**Note on `\ugScreenshot`:** the width argument is just the multiplier (`0.9`, not `0.9\textwidth`). The macro multiplies internally.
+**Note on `\ugScreenshot`:** the width argument is just the multiplier (`0.9`, not `0.9\textwidth`). The macro multiplies internally. For step-by-step screenshots, use smaller crops when the step is about a single control or button, and use wider shots when the user needs to understand layout or context.
 
 **Section guidelines** (one-line each — see skeleton stubs for structure):
 
@@ -318,10 +343,10 @@ Replace each skeleton in `docs/sections/` with project-specific content. Use onl
 - `01-document-control.tex` — one revision row (`\today`, "Generated", "Initial release")
 - `02-introduction.tex` — purpose, scope, audience, prerequisites
 - `03-system-overview.tex` — paragraph on what the system does, bullet capabilities, `ugModule{}` per major area
-- `04-getting-started.tex` — sign-in `ugSteps` + `\ugScreenshot` of login page
+- `04-getting-started.tex` — sign-in sequence with a screenshot for every step and separate button/field crops when useful
 - `05-ui-overview.tex` — overall layout description, sidebar nav table using `\ugMenu`, dashboard `\ugScreenshot`, optional `ugNote`
-- `06-core-features.tex` — one `ugModule{}` per major feature area, field tables using `\ugField`, `\ugScreenshot` per screen, one `ugTask{}` per form variant
-- `07-common-tasks.tex` — 3–5 `ugTask{}` blocks with `ugSteps`, inline `\ugButton`/`\ugField`/`\ugMenu` references
+- `06-core-features.tex` — organize by feature, then modules; each module must include purpose, who can access, key functions, step-by-step usage, business rules, and expected result
+- `07-common-tasks.tex` — 3–5 `ugTask{}` blocks with a screenshot for every step, plus inline `\ugButton`/`\ugField`/`\ugMenu` references
 - `08-troubleshooting.tex` — `ugErrorTable` with 3–5 common mistakes
 - `09-faq.tex` — 4–6 `\ugFAQ` entries from non-obvious behaviour
 - `10-best-practices.tex` — 3 `ugBestPractice` boxes (data entry, organisation, security/access)

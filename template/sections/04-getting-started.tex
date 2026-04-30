@@ -2,15 +2,20 @@
 
 \subsection{Signing in}
 
-\begin{ugSteps}
-  \item Open APP\_NAME in your web browser.
-  \item Type your email address into the \ugField{Email} field.
-  \item Type your password into the \ugField{Password} field.
-  \item Click \ugButton{Sign In}.
-\end{ugSteps}
-
-% \ugScreenshot[0.9]{screenshots/01-login.png}{The sign-in page}
+\begin{ugTask}{Signing in}
+  \begin{ugSteps}
+    \item Open APP\_NAME in your web browser.
+    \ugScreenshot[0.55]{screenshots/01-open-login.png}{The login page or landing page}
+    \item Click \ugButton{Sign In} or \ugButton{Login with NIK}.
+    \ugScreenshot[0.35]{screenshots/02-login-button.png}{The sign-in button}
+    \item Type your email address into the \ugField{Email} or \ugField{Username or NIK} field.
+    \ugScreenshot[0.55]{screenshots/03-username-field.png}{The username or NIK field}
+    \item Type your password into the \ugField{Password} field.
+    \ugScreenshot[0.55]{screenshots/04-password-field.png}{The password field}
+    \item Click \ugButton{Sign In}.
+    \ugScreenshot[0.35]{screenshots/05-signin-button.png}{The final sign-in button}
+  \end{ugSteps}
+\end{ugTask}
 
 \subsection{What happens after you sign in}
-% Describe the landing page the user sees after login.
-After signing in you will land on the home screen.
+After signing in, show the landing page or role selector that appears next. Capture that screen separately so the user can follow the flow step by step.

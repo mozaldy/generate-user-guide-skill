@@ -1,38 +1,50 @@
 \section{Common Tasks}
 
-% 3--5 most common tasks a user will do. Each task is a ugTask{} block with
-% ugSteps inside. Use \ugButton, \ugField, \ugMenu inline to reference UI
-% elements --- if a matching PNG was captured, the inline screenshot renders
-% automatically.
+% Treat this chapter as a sequence of practical actions.
+% Every step should have its own container screenshot so the user can follow along.
+% For each task, show the exact container that changes at that step.
 
 \begin{ugTask}{Add a new item}
   \begin{ugSteps}
     \item Click \ugMenu{Section} in the left-hand menu.
+    \ugScreenshot[0.55]{screenshots/common-task-01-menu.png}{The menu container for the section}
     \item Click \ugButton{Add Item}.
+    \ugScreenshot[0.35]{screenshots/common-task-02-add-button.png}{The Add Item control container}
     \item Enter a \ugField{Title}, a \ugField{Description}, and an
       \ugField{Order} number.
+    \ugScreenshot[0.55]{screenshots/common-task-03-form-fields.png}{The form container}
     \item Click \ugButton{Save}.
-    \item A confirmation message will appear and the new item will show in
-      the list.
+    \ugScreenshot[0.35]{screenshots/common-task-04-save-button.png}{The Save control container}
+    \item Confirm that the new item appears in the list.
+    \ugScreenshot[0.55]{screenshots/common-task-05-result.png}{The result container after saving}
   \end{ugSteps}
 \end{ugTask}
 
 \begin{ugTask}{Edit an existing item}
   \begin{ugSteps}
     \item Navigate to the page containing the item you want to change.
+    \ugScreenshot[0.55]{screenshots/common-task-06-target-page.png}{The target page container}
     \item Click the three-dot button (\textbf{\ldots}) at the end of its row.
+    \ugScreenshot[0.35]{screenshots/common-task-07-three-dot.png}{The row action container}
     \item Choose \textit{Edit} from the menu that appears.
+    \ugScreenshot[0.35]{screenshots/common-task-08-edit-menu.png}{The edit menu container}
     \item Make your changes in the pop-up window.
+    \ugScreenshot[0.55]{screenshots/common-task-09-edit-form.png}{The edit form container}
     \item Click the save button to confirm.
+    \ugScreenshot[0.35]{screenshots/common-task-10-save.png}{The final save container}
   \end{ugSteps}
 \end{ugTask}
 
 \begin{ugTask}{Delete an item}
   \begin{ugSteps}
     \item Navigate to the page containing the item you want to remove.
+    \ugScreenshot[0.55]{screenshots/common-task-11-delete-target.png}{The page container before deleting}
     \item Click the three-dot button (\textbf{\ldots}) at the end of its row.
+    \ugScreenshot[0.35]{screenshots/common-task-12-delete-menu.png}{The delete action container}
     \item Choose \textit{Delete}.
-    \item A confirmation message will ask you to confirm. Click to proceed.
+    \ugScreenshot[0.35]{screenshots/common-task-13-delete-confirm.png}{The delete confirmation container}
+    \item Confirm the deletion.
+    \ugScreenshot[0.55]{screenshots/common-task-14-after-delete.png}{The result container after deletion}
   \end{ugSteps}
   \begin{ugWarning}
     Deleting an item often removes everything inside it. This cannot be

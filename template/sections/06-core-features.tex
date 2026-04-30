@@ -1,38 +1,55 @@
 \section{Core Features}
 
-% One ugModule{} block per major feature area (typically one per sidebar
-% nav item). Inside each module: explain what it is, bullet what users can
-% do, and embed \ugScreenshot per screen. For features with multiple form
-% variants (e.g. challenge types, content types), use one ugTask{} per
-% variant with its own \ugScreenshot.
+% Structure this chapter by feature, not by one giant screenshot.
+% Each feature can have multiple modules and each module should be explained
+% using one container screenshot per card / table / form area.
+% Use source code to identify what each module contains and what each
+% container is called in the live UI.
 
-\subsection{Managing FEATURE\_AREA}
+\subsection{FEATURE\_NAME}
 
-\begin{ugModule}{FEATURE\_AREA}
-  Short description of this area.
+\begin{ugModule}{Module Name}
+  \textbf{Purpose}
 
-  \textbf{What you can do:}
+  Short explanation of what this module is for.
+
+  \textbf{Who can access}
+
+  State the roles or users that can open this module.
+
+  \textbf{Key functions}
   \begin{itemize}
-    \item \textbf{Add an item} --- click \ugButton{Add Item}.
-    \item \textbf{Edit an item} --- click the three-dot button (\textbf{\ldots})
-      at the end of any row and choose \textit{Edit}.
-    \item \textbf{Delete an item} --- click the three-dot button and choose
-      \textit{Delete}. You will be asked to confirm.
+    \item Main action one.
+    \item Main action two.
+    \item Main action three.
   \end{itemize}
 
-  When adding or editing, fill in these fields:
+  \textbf{Step-by-step usage}
+  \begin{ugSteps}
+    \item Open the relevant menu item or container entry point.
+    \ugScreenshot[0.55]{screenshots/feature-module-01.png}{The module entry container}
+    \item Use the main control, button, tab, or filter inside that container.
+    \ugScreenshot[0.35]{screenshots/feature-module-02.png}{The main control container}
+    \item Fill in the required fields or review the list inside the module.
+    \ugScreenshot[0.55]{screenshots/feature-module-03.png}{The form or table container}
+    \item Save or submit your changes.
+    \ugScreenshot[0.35]{screenshots/feature-module-04.png}{The save or submit container}
+  \end{ugSteps}
 
-  \begin{center}
-  \begin{tabular}{p{3cm}p{4cm}p{6cm}}
-    \toprule
-    \textbf{Field} & \textbf{Required?} & \textbf{What to enter} \\
-    \midrule
-    \ugField{Title}       & Yes & A short name for this item \\
-    \ugField{Description} & Yes & A short summary \\
-    \ugField{Order}       & Yes & A whole number for position in the list \\
-    \bottomrule
-  \end{tabular}
-  \end{center}
+  \textbf{Business rules}
+  \begin{itemize}
+    \item Rule one that users must follow.
+    \item Rule two that affects validation or access.
+    \item Rule three that affects the result.
+  \end{itemize}
+
+  \textbf{Expected result}
+
+  Describe what should happen after the user completes the module.
 \end{ugModule}
 
-% \ugScreenshot[0.9]{screenshots/NN-feature-area.png}{The FEATURE\_AREA page}
+\begin{ugModule}{Another Module}
+  Repeat the same structure for each module inside the feature.
+\end{ugModule}
+
+% Add a separate feature section for each major product area.
