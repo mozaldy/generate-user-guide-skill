@@ -1,0 +1,40 @@
+% ============================================================================
+% User Guide — Main Entry Point
+% ============================================================================
+% Build:  cd docs && tectonic user-guide-<app-slug>.tex
+% Output: docs/user-guide-<app-slug>.pdf
+% Note: rename this file to user-guide-<app-slug>.tex per project.
+% ============================================================================
+\documentclass[11pt, a4paper]{article}
+\usepackage{userguide}
+
+% ── Metadata (edit in sections/00-metadata.tex) ───────────────────────────
+\input{sections/00-metadata}
+
+% ============================================================================
+\begin{document}
+
+% ── Cover Page ─────────────────────────────────────────────────────────────
+\ugMakeCover
+
+% ── Document Control ──────────────────────────────────────────────────────
+\input{sections/01-document-control}
+
+% ── Table of Contents ─────────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+% ── Main Sections ─────────────────────────────────────────────────────────
+\input{sections/02-introduction}
+\input{sections/03-system-overview}
+\input{sections/04-getting-started}
+\input{sections/05-ui-overview}
+\input{sections/06-core-features}
+\input{sections/07-common-tasks}
+\input{sections/08-troubleshooting}
+\input{sections/09-faq}
+\input{sections/10-best-practices}
+\input{sections/11-glossary}
+\input{sections/12-appendix}
+
+\end{document}
