@@ -375,18 +375,13 @@ Only map labels that have real browser-captured PNGs. If a label has no captured
 
 ### Step 8 — Write section files
 
-Replace each skeleton in `docs/sections/` with project-specific content. Use only template commands (full reference below).
+Replace each skeleton in `docs/sections/` with project-specific content. Use the template's own section-by-section structure as the guide, especially where the template already breaks a section into deeper subtopics.
 
 **Layout rules (non-negotiable):**
 - Document control should be a single page, followed by a new page for the rest of the guide.
-- Each major chapter must start on a new page:
-  - 1 Introduction
-  - 2 System Overview
-  - 3 Getting Started
-  - 5 Core Features
-  - 6 Common Tasks
-  - and any other large chapter the user wants separated
+- Keep the same broad chapter order as the template.
 - If a chapter has multiple major subsections, keep the chapter title at the top of its new page and let the subsections continue below it.
+- Preserve the template's deeper subdivision pattern when the content naturally fits it.
 
 **Language rules (non-negotiable):**
 - Plain English or formal Indonesian, depending on the project/user request
@@ -422,23 +417,23 @@ Replace each skeleton in `docs/sections/` with project-specific content. Use onl
 
 **Note on `\ugScreenshot`:** the width argument is just the multiplier (`0.9`, not `0.9\textwidth`). The macro multiplies internally. For step-by-step screenshots, use smaller crops when the step is about a single control or button, and use wider shots when the user needs to understand layout or context.
 
-**Section guidelines** (one-line each — see skeleton stubs for structure):
+**Section guidelines** — keep the template’s richer section-by-section shape:
 
-- `00-metadata.tex` — fill app name, version, date, classification, logo
-- `01-document-control.tex` — one revision row (`\today`, "Generated", "Initial release")
-- `02-introduction.tex` — purpose, scope, audience, prerequisites
-- `03-system-overview.tex` — paragraph on what the system does, bullet capabilities, `ugModule{}` per major area
-- `04-getting-started.tex` — sign-in sequence with a screenshot for every step and separate button/field crops when useful
-- `05-ui-overview.tex` — overall layout description, sidebar nav table using `\ugMenu`, dashboard `\ugScreenshot`, optional `ugNote`
+- `00-metadata.tex` — fill app name, subtitle, version, company, classification, tagline, logo, and cover image fields
+- `01-document-control.tex` — one revision row and a clean document-control layout
+- `02-introduction.tex` — purpose, problem statement, scope, intended audience, prerequisites, document conventions, how to use the guide, related documents
+- `03-system-overview.tex` — what the system does, functional capabilities, roles, and platform overview paragraphs or modules
+- `04-getting-started.tex` — sign-in sequence, role selection, and initial access steps with a screenshot for every visible state
+- `05-ui-overview.tex` — overall layout description, sidebar navigation, common UI elements, status badges, modals, grid operations, and other persistent interface regions
   - for sidebar-focused sections, write a short explanatory sentence and place one centered, narrow live crop of the sidebar or menu container rather than a full-page dashboard screenshot
   - if the sidebar is the subject, the crop should show only the sidebar block and enough header/search/menu context to read it clearly
-- `06-core-features.tex` — organize by feature, then modules; each module must include purpose, who can access, key functions, step-by-step usage, business rules, and expected result
+- `06-core-features.tex` and `06-0x-*.tex` — organize by feature/module; each module should include purpose, access, key functions, step-by-step usage, business rules, and expected result
 - `07-common-tasks.tex` — 3–5 `ugTask{}` blocks with a screenshot for every step, plus inline `\ugButton`/`\ugField`/`\ugMenu` references
-- `08-troubleshooting.tex` — `ugErrorTable` with 3–5 common mistakes
-- `09-faq.tex` — 4–6 `\ugFAQ` entries from non-obvious behaviour
-- `10-best-practices.tex` — 3 `ugBestPractice` boxes (data entry, organisation, security/access)
+- `08-troubleshooting.tex` — `ugErrorTable` with common mistakes and fixes
+- `09-faq.tex` — `\ugFAQ` entries from non-obvious behaviour
+- `10-best-practices.tex` — `ugBestPractice` boxes for data entry, organisation, and security/access
 - `11-glossary.tex` — `\ugGlossaryEntry` per domain-specific term
-- `12-appendix.tex` — keyboard shortcuts table, optional reference tables
+- `12-appendix.tex` — keyboard shortcuts and reference tables
 
 ---
 

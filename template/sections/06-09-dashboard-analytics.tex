@@ -1,0 +1,117 @@
+% ============================================================================
+% Core Feature: Dashboard Analytics
+% ============================================================================
+\section{Dashboard Analytics}
+
+\begin{ugModule}{Overview}
+
+  \textbf{Purpose:}
+  Provide role-specific dashboards with real-time insights and
+  actionable metrics.
+
+  \textbf{Who Can Access:}
+  All authenticated users (dashboard content varies by role).
+\end{ugModule}
+
+\subsection{Admin / Manager Dashboard}
+
+The administrative dashboard provides a full organizational
+overview:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Widget} & \textbf{Details} \\
+  \midrule
+  Overview Cards
+    & Total documents, active, archived, deleted, total
+      versions, storage usage, total downloads,
+      unique users \\
+  Download Trend
+    & 30-day area chart showing daily download volume \\
+  Status Distribution
+    & Doughnut chart showing document count per status \\
+  Type Distribution
+    & Horizontal bar chart by document type
+      (SOP, SK, etc.) \\
+  Unit Distribution
+    & Horizontal bar chart by organizational unit \\
+  Top~10 Documents
+    & Most downloaded documents (title, type,
+      download count) \\
+  Pending Items
+    & Alert cards: review pending, access requests
+      pending, documents expiring within 7~days,
+      access grants expiring within 7~days \\
+  Recent Activity
+    & Live feed of the 20 most recent system
+      activities \\
+  \bottomrule
+\end{tabularx}
+
+\subsection{Reviewer Dashboard}
+
+The reviewer dashboard focuses on the approval pipeline:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Widget} & \textbf{Details} \\
+  \midrule
+  Review Pipeline
+    & Stat cards: pending, approved (this month),
+      rejected (this month) \\
+  Status Pipeline
+    & Stacked bar visualization of all documents
+      per status \\
+  Pending Review Table
+    & Documents awaiting review, sorted oldest-first
+      (urgency priority) \\
+  Recent Status Changes
+    & Timeline of the 20 most recent status
+      transitions \\
+  \bottomrule
+\end{tabularx}
+
+\subsection{Staff Dashboard}
+
+The staff dashboard shows personal document activity:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Widget} & \textbf{Details} \\
+  \midrule
+  My Documents
+    & Stat cards: total owned, in review,
+      rejected \\
+  Status Donut
+    & Mini donut chart of your documents
+      by status \\
+  Draft Quick Actions
+    & Card list of your draft documents with
+      Edit and Submit buttons \\
+  My Access Requests
+    & Status of your pending, approved, and
+      rejected access requests \\
+  My Activity Feed
+    & Personal timeline of your 15 most recent
+      actions \\
+  \bottomrule
+\end{tabularx}
+
+\subsection{Dashboard Refresh \& Real-Time Updates}
+
+\begin{itemize}[leftmargin=18pt]
+  \item Dashboard data is loaded on page visit and refreshed
+        via API calls when navigating back to the dashboard.
+  \item Real-time notification badges (pending review count,
+        new access requests) update via WebSocket connections.
+  \item Charts use responsive sizing and adapt to the browser
+        window width.
+\end{itemize}
+
+\begin{ugTip}
+  Check your dashboard at the start of each work day to stay
+  on top of pending review requests, access requests, and
+  documents nearing expiry.
+\end{ugTip}
+
+\newpage

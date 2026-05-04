@@ -1,0 +1,78 @@
+% ============================================================================
+% Core Feature: Versioning
+% ============================================================================
+\section{Versioning}
+
+\begin{ugModule}{Overview}
+
+  \textbf{Purpose:}
+  Maintain a complete, immutable revision history for every
+  document. Old versions are never modified or deleted.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager} \ugRole{Staff} (owner)
+\end{ugModule}
+
+\subsection{Key Functions}
+\begin{itemize}[leftmargin=18pt]
+  \item \textbf{Upload Revision} --- Upload a new file to
+    create version~$n+1$; the previous version is preserved
+  \item \textbf{Preview Old Versions} --- View or download
+    any previous version from the document detail page
+  \item \textbf{Update Metadata Only} --- Change title, tags,
+    or description without creating a new file version
+  \item \textbf{File Integrity} --- Each version stores its
+    own SHA-256 checksum for tamper verification
+\end{itemize}
+
+\subsection{Step-by-Step: Uploading a Revision}
+\begin{ugSteps}
+  \item Navigate to the document's detail page.
+  \item Click \ugButton{Upload Revision}.
+  \item Select the new PDF file.
+  \item The system automatically increments the version number,
+        computes a new checksum, extracts text, and stores the
+        file.
+  \item The \ugField{Current Version} indicator updates to
+        reflect the latest version.
+\end{ugSteps}
+
+\subsection{Version Information Recorded}
+
+Each version records the following data:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Field} & \textbf{Description} \\
+  \midrule
+  Version Number    & Sequential integer (1, 2, 3, \ldots) \\
+  File Path         & Storage location in MinIO \\
+  File Size         & Size in bytes \\
+  MIME Type         & Content type (\texttt{application/pdf}) \\
+  SHA-256 Checksum  & Hash for integrity verification \\
+  Original Filename & Name of the uploaded file \\
+  Uploader          & User who uploaded this version \\
+  Upload Timestamp  & Date and time of upload \\
+  Extracted Text    & Full text content for search indexing \\
+  \bottomrule
+\end{tabularx}
+
+\subsection{Business Rules}
+\begin{itemize}[leftmargin=18pt]
+  \item Versions are \textbf{immutable} --- once created, a
+        version cannot be edited or overwritten.
+  \item Metadata updates (title, tags, description) do
+        \textbf{not} create a new file version.
+  \item Only the document owner, \ugRole{Manager}, or
+        \ugRole{Admin} can upload revisions.
+  \item All previous versions remain fully accessible for
+        preview and download at any time.
+\end{itemize}
+
+\begin{ugTip}
+  Use the version history to compare changes over time.
+  Before submitting a document for review, ensure you have
+  uploaded the final, correct version of the file.
+\end{ugTip}
+
+\newpage

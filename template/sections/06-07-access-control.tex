@@ -1,0 +1,263 @@
+% ============================================================================
+% Core Feature: Access Control (ACL)
+% ============================================================================
+\section{Access Control (ACL)}
+
+\begin{ugModule}{Overview}
+
+  \textbf{Purpose:}
+  Manage fine-grained, per-document access permissions with
+  multi-type grants and a self-service access request workflow.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager} (manage);
+  \ugRole{Staff} (request access)
+\end{ugModule}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Access Control Model}
+
+InsightDoc uses a three-tier access control model. The
+document-level ACL is set during document creation (Tab~3)
+and can be changed later:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{ACL Level} & \textbf{Behavior} \\
+  \midrule
+  \textbf{Public}
+    & All authenticated users can access. No additional
+      configuration required. \\
+  \textbf{Protected}
+    & All authenticated users within the organization can
+      access. External sharing is restricted. \\
+  \textbf{Private}
+    & Only explicitly granted users, roles, or units can
+      access. The document is invisible to everyone else. \\
+  \bottomrule
+\end{tabularx}
+
+For Private documents, access is granted through
+\texttt{DocumentAccess} records that specify exactly who
+can view and download the document.
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Access Grant Types}
+
+When a document is set to Private, access can be granted
+through three different types:
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Type} & \textbf{Code}
+    & \textbf{Description} \\
+  \midrule
+  By Unit
+    & \texttt{unit}
+    & Grants access to \textbf{all users} within a
+      selected organizational unit. When new users
+      are added to the unit, they automatically
+      receive access. \\
+  By Role (Division)
+    & \texttt{role}
+    & Grants access by unit division level
+      (positional role). All users holding that
+      position receive access. \\
+  By User
+    & \texttt{user}
+    & Grants access to a \textbf{specific individual
+      user}. Most granular control. \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Access Grant Data}
+
+Each \texttt{DocumentAccess} record stores:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Field} & \textbf{Description} \\
+  \midrule
+  Document
+    & The document this grant applies to \\
+  Access Type
+    & Unit, Role (Division), or User \\
+  Unit
+    & Target unit (when type is ``unit'') \\
+  Unit Division
+    & Target division role (when type is ``role'') \\
+  Allow User
+    & Target individual user (when type is ``user'') \\
+  Granted By
+    & Name of the person who created this grant \\
+  Granted At
+    & Timestamp when access was granted \\
+  Expires At
+    & Optional expiry date; access is automatically
+      denied after this date \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugTip}
+  Use time-limited access grants (\ugField{Expires At}) for
+  temporary collaborators, contractors, or audit purposes.
+  This eliminates the need to manually revoke access when
+  the collaboration period ends.
+\end{ugTip}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Managing Access}
+
+Access is managed via the document's \ugMenu{Access} tab:
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Action} & \textbf{API Endpoint}
+    & \textbf{Description} \\
+  \midrule
+  View grants
+    & \texttt{GET .../access}
+    & List all current access grants \\
+  Add grant
+    & \texttt{POST .../access}
+    & Grant access to a unit, role, or user \\
+  Revoke grant
+    & \texttt{DELETE .../access/\{id\}}
+    & Immediately revoke a specific grant \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Access Request Workflow}
+
+Users who lack access to a Private document can submit a
+self-service access request:
+
+\subsubsection*{Request Fields}
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Field} & \textbf{Description} \\
+  \midrule
+  Request Code
+    & Auto-generated unique request identifier \\
+  Document
+    & The document being requested \\
+  Access Type
+    & The type of access requested \\
+  Requested User
+    & The user submitting the request \\
+  Requested By
+    & Name of the requesting user \\
+  Requested At
+    & Timestamp of submission \\
+  Requested Message
+    & Mandatory reason/justification for the
+      request \\
+  Status
+    & Current status: Pending, Approved, or
+      Rejected \\
+  \bottomrule
+\end{tabularx}
+
+\subsubsection*{Response Fields (After Review)}
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Field} & \textbf{Description} \\
+  \midrule
+  Responded User
+    & The admin/manager who reviewed the request \\
+  Responded By
+    & Name of the reviewer \\
+  Responded At
+    & Timestamp of the review decision \\
+  Response Comment
+    & Optional comment from the reviewer \\
+  Document Access
+    & If approved, the resulting
+      \texttt{DocumentAccess} record \\
+  Expires At
+    & Optional expiry set by the reviewer \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Step-by-Step: Requesting Access}
+
+\begin{ugSteps}
+  \item Navigate to a document you cannot access. The system
+        shows a restricted access message.
+  \item Click \ugButton{Request Access}.
+  \item Enter a \textbf{justification message} explaining
+        why you need access.
+  \item Click \ugButton{Submit Request}.
+  \item Your request enters \texttt{Pending} status.
+  \item You will be notified when the request is approved
+        or rejected.
+\end{ugSteps}
+
+\subsection{Step-by-Step: Reviewing Access Requests}
+
+\begin{ugSteps}
+  \item Navigate to the document's detail page.
+  \item Open the \ugMenu{Access Requests} section.
+  \item Review pending requests --- see the requester's name,
+        message, and submission date.
+  \item Click \ugButton{Approve} to grant access or
+        \ugButton{Reject} to deny.
+  \item If approving, a \texttt{DocumentAccess} entry is
+        automatically created, linking the request to the
+        new grant.
+  \item Optionally set an \ugField{Expires At} date for the
+        grant.
+  \item Add a \ugField{Response Comment} if needed.
+\end{ugSteps}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Activity Tracking}
+
+All access-related actions are recorded as
+\texttt{DocumentActivity} entries:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Action Code} & \textbf{Description} \\
+  \midrule
+  \texttt{request-access}
+    & User submitted an access request \\
+  \texttt{approve-access}
+    & Admin/Manager approved a request \\
+  \texttt{reject-access}
+    & Admin/Manager rejected a request \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Business Rules}
+
+\begin{itemize}[leftmargin=18pt]
+  \item Access grants are enforced during document preview,
+        download, and detail view operations.
+  \item Expired access grants (\texttt{ExpiresAt} in the past)
+        are automatically denied.
+  \item Only one pending request per user per document is
+        allowed (duplicate prevention).
+  \item Approved requests automatically create a linked
+        \texttt{DocumentAccess} record.
+  \item Revoking an access grant is immediate and permanent.
+  \item Unit-based grants are dynamic --- when a new user
+        joins the unit, they automatically receive access.
+  \item Role/Division grants work similarly --- all users
+        holding the specified position receive access.
+\end{itemize}
+
+\begin{ugImportant}
+  When a document is set to \textbf{Private} during creation,
+  at least one access grant (by unit, role, or user) must be
+  specified. This prevents creating orphan documents that no
+  one can access.
+\end{ugImportant}
+
+\newpage
