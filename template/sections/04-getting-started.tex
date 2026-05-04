@@ -1,21 +1,257 @@
+% ============================================================================
+% 6. Getting Started
+% ============================================================================
 \section{Getting Started}
 
-\subsection{Signing in}
+% ────────────────────────────────────────────────────────────────
+\subsection{System Requirements}
 
-\begin{ugTask}{Signing in}
-  \begin{ugSteps}
-    \item Open APP\_NAME in your web browser.
-    \ugScreenshot[0.55]{screenshots/01-open-login.png}{The login page or landing page}
-    \item Click \ugButton{Sign In} or \ugButton{Login with NIK}.
-    \ugScreenshot[0.35]{screenshots/02-login-button.png}{The sign-in button}
-    \item Type your email address into the \ugField{Email} or \ugField{Username or NIK} field.
-    \ugScreenshot[0.55]{screenshots/03-username-field.png}{The username or NIK field}
-    \item Type your password into the \ugField{Password} field.
-    \ugScreenshot[0.55]{screenshots/04-password-field.png}{The password field}
-    \item Click \ugButton{Sign In}.
-    \ugScreenshot[0.35]{screenshots/05-signin-button.png}{The final sign-in button}
-  \end{ugSteps}
-\end{ugTask}
+Before accessing Insight Doc, ensure your environment meets the
+following minimum requirements:
 
-\subsection{What happens after you sign in}
-After signing in, show the landing page or role selector that appears next. Capture that screen separately so the user can follow the flow step by step.
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Requirement} & \textbf{Specification} \\
+  \midrule
+  Web Browser
+    & Google Chrome 120+, Mozilla Firefox 115+,
+      or Microsoft Edge 120+ \\
+  Internet Connection
+    & Minimum 5~Mbps (recommended 10~Mbps for
+      large document preview and download) \\
+  Screen Resolution
+    & Minimum 1280\,\texttimes\,720; optimized for
+      1920\,\texttimes\,1080 and above \\
+  JavaScript
+    & Must be enabled in your browser \\
+  Cookies
+    & Must be enabled for session management \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugNote}
+  Safari 17+ is partially supported. Some advanced features
+  (such as real-time WebSocket notifications) may have limited
+  functionality on Safari.
+\end{ugNote}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Accessing the Application}
+
+\begin{ugSteps}
+  \item Open your web browser and navigate to the Insight Doc URL
+        provided by your organization
+        (e.g., \texttt{https://insight.company.com}).
+  \item You will be redirected to the \textbf{Keycloak SSO}
+        login page.
+  \item Enter your \ugField{Username} (or \ugField{Corporate Email})
+        and \ugField{Password}.
+  \item Click \ugButton{Sign In}.
+  \item If Multi-Factor Authentication (MFA) is enabled on your
+        account, enter the verification code from your
+        authenticator app.
+  \item Upon successful authentication, you will be redirected
+        to the Insight Doc \textbf{Dashboard} appropriate for
+        your role.
+\end{ugSteps}
+
+\begin{ugTip}
+  Bookmark the application URL for quick access. Since Insight Doc
+  uses Keycloak Single Sign-On (SSO), you may be automatically
+  logged in if you already have an active SSO session from another
+  corporate application.
+\end{ugTip}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{First Login}
+
+On your first login, Keycloak may prompt you to:
+
+\begin{enumerate}[leftmargin=18pt]
+  \item \textbf{Update your password} --- Set a strong password
+        that meets your organization's security policy.
+  \item \textbf{Configure MFA} --- Scan the QR code with an
+        authenticator app (Google Authenticator, Microsoft
+        Authenticator, or similar).
+  \item \textbf{Accept Terms of Use} --- Review and accept the
+        organization's terms and conditions.
+\end{enumerate}
+
+\begin{ugWarning}
+  If you cannot log in or did not receive credentials, contact the
+  IT Help Desk at \texttt{helpdesk@sindika.co.id} or extension
+  \textbf{4500}. Account provisioning is managed centrally through
+  Keycloak by your system administrator.
+\end{ugWarning}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Understanding Your Role}
+
+After login, your experience is shaped by your assigned role.
+The following table summarizes what each role can do:
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Role} & \textbf{Badge}
+    & \textbf{What You Can Do} \\
+  \midrule
+  Admin
+    & \ugRole{Admin}
+    & Full system access --- upload, review, approve,
+      manage all documents, users, master data,
+      access control, and system configuration \\
+  Manager
+    & \ugRole{Manager}
+    & Manage documents and approvals within your unit;
+      grant/revoke access; create share links;
+      view admin-level dashboards \\
+  Reviewer
+    & \ugRole{Reviewer}
+    & Review submitted documents; approve or reject
+      with comments; view the review pipeline
+      dashboard \\
+  Staff
+    & \ugRole{Staff}
+    & Upload and manage your own documents; request
+      access to restricted documents; view personal
+      dashboard and download documents \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugNote}
+  Your role determines both the menu items visible in the
+  sidebar and the actions available on each page. If you
+  believe your role is incorrect, contact your administrator.
+\end{ugNote}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Dashboard Overview After Login}
+
+Upon login, you will see a personalized dashboard based on
+your role:
+
+\begin{description}[leftmargin=18pt, style=nextline]
+  \item[\ugRole{Admin} / \ugRole{Manager} Dashboard]
+    Full organizational overview including total documents,
+    storage usage, download trends (30-day chart), distribution
+    by status/type/unit, top~10 most-downloaded documents,
+    pending review and access request counts, and a live
+    activity feed.
+
+  \item[\ugRole{Reviewer} Dashboard]
+    Review pipeline focus --- pending review count, approved and
+    rejected counts for the current month, status pipeline
+    visualization, documents awaiting review (sorted by oldest
+    first), and recent status change history.
+
+  \item[\ugRole{Staff} Dashboard]
+    Personal document overview --- your total documents, those
+    in review, rejected items, a status breakdown donut chart,
+    draft documents with quick-action buttons, pending access
+    requests, and your recent activity feed.
+\end{description}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Changing Your Language}
+
+Insight Doc supports two languages:
+
+\begin{itemize}[leftmargin=18pt]
+  \item \textbf{English} (default)
+  \item \textbf{Bahasa Indonesia}
+\end{itemize}
+
+To switch languages:
+
+\begin{ugSteps}
+  \item Click your \textbf{profile avatar} in the top-right
+        corner of the header.
+  \item Select \ugMenu{Language} from the dropdown menu.
+  \item Choose your preferred language.
+  \item The interface will reload in the selected language.
+\end{ugSteps}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Logging Out \& Session Management}
+
+\subsubsection*{Logging Out}
+\begin{ugSteps}
+  \item Click your \textbf{profile avatar} in the top-right
+        corner.
+  \item Select \ugMenu{Logout} from the dropdown.
+  \item You will be redirected to the Keycloak logout page,
+        which also terminates your SSO session across all
+        connected applications.
+\end{ugSteps}
+
+\subsubsection*{Session Timeout}
+\begin{itemize}[leftmargin=18pt]
+  \item Your session is managed by Keycloak via JWT tokens
+        with a configurable expiry (typically 30~minutes for
+        access tokens, 8~hours for refresh tokens).
+  \item If your session expires while you are working, the
+        application will prompt you to re-authenticate.
+  \item Active sessions are automatically extended when you
+        interact with the application.
+\end{itemize}
+
+\begin{ugWarning}
+  Always log out when using shared or public computers. Closing
+  the browser tab alone does \textbf{not} terminate your SSO
+  session --- use the \ugMenu{Logout} option to fully sign out.
+\end{ugWarning}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Navigating for the First Time}
+
+After login, here is a recommended first-time exploration
+sequence:
+
+\begin{ugSteps}
+  \item \textbf{Explore the Dashboard} --- Your landing page
+        shows role-specific analytics and pending action items.
+        Familiarize yourself with the stat cards and activity
+        timeline.
+  \item \textbf{Browse Documents} --- Click \ugMenu{Documents}
+        in the sidebar to see the document list. Try switching
+        between list view and thumbnail grid view.
+  \item \textbf{Try a Search} --- Use the search bar in the
+        header to search for a known document by title or
+        keyword.
+  \item \textbf{Open a Document} --- Click any document to view
+        its detail page. Explore the tabs: metadata, version
+        history, timeline, access, and share.
+  \item \textbf{Preview a Document} --- Click \ugButton{Preview}
+        to view a document in your browser without downloading.
+  \item \textbf{Check Your Profile} --- Click your avatar to
+        verify your name, role, and language preference.
+\end{ugSteps}
+
+\begin{ugTip}
+  If you are a \ugRole{Staff} user, start by uploading a test
+  document to experience the full workflow: upload, submit for
+  review, and track status changes on your dashboard.
+\end{ugTip}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Browser Configuration Tips}
+
+For the best experience with Insight Doc:
+
+\begin{itemize}[leftmargin=18pt]
+  \item \textbf{Enable pop-ups} for the application domain ---
+        some download and share link operations may open new
+        tabs.
+  \item \textbf{Allow cookies} --- required for session
+        management and SSO authentication.
+  \item \textbf{Enable JavaScript} --- the application requires
+        JavaScript for all interactive features.
+  \item \textbf{Disable PDF-blocking extensions} --- browser
+        extensions that intercept PDF files may interfere with
+        the in-browser preview feature.
+  \item \textbf{Use zoom at 100\%} --- the interface is designed
+        for standard zoom levels; extreme zoom may affect
+        layout rendering.
+\end{itemize}
+
+\newpage

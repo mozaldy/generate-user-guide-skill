@@ -82,6 +82,7 @@ Important template conventions:
 - `06-core-features.tex` is the most important section and should be expanded for every major feature module
 - every user-facing step should include a screenshot reference or `\ugScreenshotPlaceholder`
 - button and icon references should use the template's inline commands such as `\ugButton{...}`, `\ugButtonIcon{...}`, `\ugIconRef{...}` when available
+- inline UI labels must be rendered from browser/Playwright-captured screenshots, not synthetic drawings, text styling, or hand-made approximations
 - the template's structure and section order are the source of truth; do not invent a different hierarchy unless the user explicitly asks for one
 
 The bundled `userguide.sty` should already include tectonic-safe adjustments, such as:
@@ -229,25 +230,34 @@ Keep body text neutral:
 
 ---
 
-### Step 5 — Capture screenshots by container / component
+### Step 5 — Capture screenshots with browser/Playwright
 
-Write `scripts/capture-screenshots.mjs`:
+Write `scripts/capture-screenshots.mjs` and use real browser captures for every page/state.
 
-1. Headless Chromium at 1440×900
-2. Login: navigate to sign-in route → fill EMAIL/PASSWORD → submit → wait for redirect
+Rules:
+1. Use Chromium/Playwright for the actual screenshot capture. The browser may be driven by the Hermes browser tool or by Playwright in a script, but the final image must come from the live UI.
+2. Login: navigate to sign-in route → fill EMAIL/PASSWORD → submit → wait for redirect.
 3. For each user flow:
    - Navigate to the URL (use real IDs from live data — click through to discover them)
    - `await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {})`
-   - Prefer container-sized captures: one card, one table, one sidebar block, one modal, or one form section per screenshot
-   - Avoid one huge full-page capture if it will make the document tall, cramped, or hard to read
-   - If a page has multiple visible containers, capture each important container separately and let the PDF explain them in sequence
-   - Do not add red annotation boxes to the final screenshots unless the user explicitly asks for annotated UI review images
-   - For modal flows: click trigger → wait 500ms → screenshot → `Escape`
-   - For forms with type variants: open modal, select each type, screenshot each separately
-   - Save to `docs/screenshots/NN-descriptive-name.png` (zero-padded)
-   - `console.log` each file saved
+   - Prefer container-sized captures: one card, one table, one sidebar block, one modal, or one form section per screenshot.
+   - Crop the smallest useful live container instead of using a full-page capture. If only the sidebar is needed, capture only the sidebar element. If only one chart/table card is needed, capture only that card.
+   - Avoid one huge full-page capture if it will make the document tall, cramped, or hard to read.
+   - If a page has multiple visible containers, capture each important container separately and let the PDF explain them in sequence.
+   - Do not add red annotation boxes to the final screenshots unless the user explicitly asks for annotated UI review images.
+   - For modal flows: click trigger → wait 500ms → screenshot → `Escape`.
+   - For forms with type variants: open modal, select each type, screenshot each separately.
+   - Save to `docs/screenshots/NN-descriptive-name.png` (zero-padded).
+   - `console.log` each file saved.
 
-When deciding what a container means, read the source code first. Use the component tree, route file, and layout files to identify the real structure and the intended label for each container before writing the explanation.
+When deciding what a container means, read the source code first. Use the component tree, route file, and layout files to identify the real structure and the intended label for each container before writing the explanation. Source code is only for route/structure discovery; it is not a substitute for the browser screenshot.
+
+Crop helper pattern:
+- Prefer `locator.screenshot()` for a single container, button, card, sidebar, or table.
+- If you need extra padding around a container, use `locator.boundingBox()` and `page.screenshot({ clip })`.
+- Clip a little wider/taller than the element if the screenshot needs context, but keep the crop focused on the required container.
+- For dashboards, capture distinct regions separately: sidebar, top bar, summary cards, chart cards, and table cards.
+- If a container is partially off-screen, scroll it into view before capturing it.
 
 Selectors:
 - Buttons: `page.getByRole('button', { name: /text/i }).first()`
@@ -264,11 +274,13 @@ ls docs/screenshots/
 
 ### Step 6 — Capture inline UI element screenshots
 
-For every `\ugButton{X}`, `\ugField{Y}`, `\ugMenu{Z}` planned for the section files, capture the element itself with Playwright `element.screenshot()`. The final PDF should show the UI control as a screenshot image, not as styled text.
+For every `\ugButton{X}`, `\ugField{Y}`, `\ugMenu{Z}` planned for the section files, capture the matching live UI element itself with Playwright `element.screenshot()` or a browser-tool screenshot of the live page. Use the exact UI label string from the app so the lookup hits the real control. The final PDF should show the UI control as a screenshot image when capture succeeds, not as styled text.
 
-Prefer tight crops or component-only shots for inline UI references; do not capture a full page just to extract a single label.
+Prefer tight crops or component-only shots for inline UI references; do not capture a full page just to extract a single label. Do not create synthetic UI assets with PIL, CSS mockups, or text-drawn surrogates.
 
-Build a list of every label that will be referenced. Group by type (button / field / menu). Every planned label must have a matching screenshot image before you write the section files.
+If a capture fails or the element cannot be isolated cleanly, fall back to the normal styled-text rendering from `\ugButtonOrig`, `\ugFieldOrig`, or `\ugMenuOrig`. Do not invent fake image assets just to preserve the screenshot workflow.
+
+Build a list of every label that will be referenced. Group by type (button / field / menu). Every planned label should have a matching screenshot image when practical, but normal colored-text rendering is the approved fallback when capture is not possible.
 
 Write `scripts/capture-ui-elements.mjs`:
 
@@ -348,7 +360,7 @@ Output structure of `docs/ui-overrides.tex`:
 
 The `\ugElemImg*` macros and `\ug*Orig` originals are pre-defined in the .sty. Don't redefine them — just use them.
 
-Every label that appears in the guide must have a captured PNG. If a label does not have a screenshot, capture it before writing the section text. Do not rely on styled-text fallback for the final document.
+Only map labels that have real browser-captured PNGs. If a label has no captured screenshot, leave the original `\ugButtonOrig`, `\ugFieldOrig`, or `\ugMenuOrig` rendering in place so the guide still uses the normal colored-text style. Do not invent image assets as a fallback.
 
 ---
 
@@ -409,6 +421,8 @@ Replace each skeleton in `docs/sections/` with project-specific content. Use onl
 - `03-system-overview.tex` — paragraph on what the system does, bullet capabilities, `ugModule{}` per major area
 - `04-getting-started.tex` — sign-in sequence with a screenshot for every step and separate button/field crops when useful
 - `05-ui-overview.tex` — overall layout description, sidebar nav table using `\ugMenu`, dashboard `\ugScreenshot`, optional `ugNote`
+  - for sidebar-focused sections, write a short explanatory sentence and place one centered, narrow live crop of the sidebar or menu container rather than a full-page dashboard screenshot
+  - if the sidebar is the subject, the crop should show only the sidebar block and enough header/search/menu context to read it clearly
 - `06-core-features.tex` — organize by feature, then modules; each module must include purpose, who can access, key functions, step-by-step usage, business rules, and expected result
 - `07-common-tasks.tex` — 3–5 `ugTask{}` blocks with a screenshot for every step, plus inline `\ugButton`/`\ugField`/`\ugMenu` references
 - `08-troubleshooting.tex` — `ugErrorTable` with 3–5 common mistakes

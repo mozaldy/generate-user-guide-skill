@@ -1,24 +1,246 @@
+% ============================================================================
+% 4. Introduction
+% ============================================================================
 \section{Introduction}
 
-% Replace placeholders with project-specific content. Plain English, second
-% person ("you"). Avoid technical jargon — this guide is for end users.
-
 \subsection{Purpose}
-% 2--3 sentences on what the app does and why someone would use it.
-This guide helps you use APP\_NAME.
+This guide provides comprehensive instructions for using
+\textbf{Insight Doc} (also referred to as \textbf{SGN Insight}), an
+enterprise knowledge management platform developed by
+PT.\ Sinergi Dimensi Informatika (Sindika). It is designed to
+transform scattered, uncontrolled documents --- SOPs, policies, manuals,
+technical records, and strategic assets --- into a structured,
+secure, and intelligent organizational knowledge base.
+
+This document covers every aspect of daily operation, from first-time
+login and basic navigation through advanced workflows such as
+document approval chains, AI-powered search, secure download with
+rasterized watermarking, and role-based analytics dashboards.
+
+\subsection{The Problem Insight Doc Solves}
+
+Organizations frequently struggle with fragmented, uncontrolled, and
+vulnerable knowledge assets. Insight Doc was built to address the
+following pain points:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Problem} & \textbf{Description} \\
+  \midrule
+  Scattered Documents
+    & Critical SOPs, policies, and manuals spread across shared
+      drives, emails, and physical files \\
+  Uncontrolled Sharing
+    & Sensitive documents shared without access controls, increasing
+      data leakage risk \\
+  Version Confusion
+    & Multiple versions circulate with no tracking --- employees may
+      follow obsolete procedures \\
+  No Audit Trail
+    & No systematic tracking of who accessed, modified, or shared
+      critical documents \\
+  Data Leakage Risk
+    & Intellectual property and strategic records vulnerable without
+      systematic access control \\
+  Weak Governance
+    & No structured lifecycle management for document expiry, review,
+      and compliance \\
+  \bottomrule
+\end{tabularx}
 
 \subsection{Scope}
-% What this guide covers and what it does not cover.
-This guide covers the main areas you will use day to day.
+This document covers the following functional areas of the platform:
 
-\subsection{Audience}
-% Who should read this. Usually: non-technical end users / admin users.
-This guide is for people who manage content in APP\_NAME. No technical
-background is required.
+\begin{itemize}[leftmargin=18pt]
+  \item System access, SSO authentication, and role assignment
+  \item Document management --- upload, metadata, categorization,
+        and full-text search
+  \item Version control --- immutable revision history and file
+        integrity (SHA-256)
+  \item Approval workflows --- six-status lifecycle with audit trail
+  \item Document preview --- in-browser viewing with HTTP Range
+        streaming
+  \item Secure download --- PDF rasterization, embedded watermarking,
+        and rate limiting
+  \item Share links and download tokens --- public sharing with
+        expiry, download limits, and revocation
+  \item Access control --- per-document ACL with user/role grants
+        and time-limited access
+  \item Access request workflow --- self-service request, approval,
+        and automatic provisioning
+  \item Audit, analytics, and unified activity timeline
+  \item Role-based dashboards --- Admin/Manager, Reviewer, and Staff
+  \item AI-powered intelligence --- full-text + semantic search and
+        RAG-based chat assistant
+  \item Master data administration --- document types, statuses,
+        organizational units, and ACL groups
+  \item Lifecycle management --- soft delete, restore, and
+        auto-archive on expiry
+\end{itemize}
+
+\subsection{Intended Audience}
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Role} & \textbf{System Role} & \textbf{Relevant Sections} \\
+  \midrule
+  End Users / Staff
+    & \ugRole{Staff}
+    & Sections 3 -- 7 (Overview, Getting Started, UI, Core Features,
+      Common Tasks) \\
+  Reviewers
+    & \ugRole{Reviewer}
+    & Sections 6 -- 7 (Approval Workflows, Review Dashboard) \\
+  Managers
+    & \ugRole{Manager}
+    & Sections 6 -- 7 (Approvals, Access Control, Analytics) \\
+  Administrators
+    & \ugRole{Admin}
+    & All sections, especially Sections 6, 10 -- 12 (Master Data,
+      Configuration, Appendices) \\
+  Support Personnel
+    & ---
+    & Sections 8 -- 9 (Troubleshooting, FAQ) \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugNote}
+  Insight Doc implements four primary roles ---
+  \ugRole{Admin}, \ugRole{Manager}, \ugRole{Reviewer}, and
+  \ugRole{Staff} --- each with progressively restricted permissions.
+  A fifth implicit role, \textbf{Public}, applies to users accessing
+  documents via share links or download tokens without authentication.
+\end{ugNote}
 
 \subsection{Prerequisites}
-% Only what is truly needed to start (e.g. an account, a browser).
-\begin{itemize}
-  \item An account with access to APP\_NAME.
-  \item A modern web browser.
+
+\subsubsection*{For End Users}
+\begin{itemize}[leftmargin=18pt]
+  \item Active corporate account provisioned via \textbf{Keycloak SSO}
+        with an assigned role
+  \item Modern web browser (Chrome 120+, Firefox 115+, Edge 120+)
+  \item Stable internet connection (minimum 5~Mbps recommended)
+  \item Basic familiarity with web-based business applications
 \end{itemize}
+
+\subsubsection*{For Administrators}
+\begin{itemize}[leftmargin=18pt]
+  \item All end-user prerequisites above
+  \item Access to the \textbf{Keycloak Administration Console} for
+        user and role management
+  \item Familiarity with organizational unit structure and document
+        classification policies
+\end{itemize}
+
+\begin{ugNote}
+  If you do not have an account, contact the IT Help Desk at
+  \texttt{helpdesk@sindika.co.id} or extension \textbf{4500}.
+  Account provisioning is managed centrally through the Keycloak
+  identity provider.
+\end{ugNote}
+
+\subsection{Document Conventions}
+
+Throughout this guide, the following formatting conventions are used
+to help you identify interface elements and important information:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Convention} & \textbf{Meaning} \\
+  \midrule
+  \ugButton{Button Name}
+    & A clickable button in the user interface \\
+  \ugMenu{Menu > Submenu}
+    & A navigation path through the application menus \\
+  \ugField{Field Name}
+    & A form field or input label \\
+  \ugRole{Role}
+    & A system role badge indicating required permissions \\
+  \ugStatus{ugSuccess}{Active}
+    & A document or workflow status indicator \\
+  \ugKey{Ctrl} + \ugKey{S}
+    & A keyboard shortcut \\
+  \texttt{monospace text}
+    & API endpoints, file paths, or configuration values \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugTip}
+  Use the \textbf{Table of Contents} at the beginning of this document
+  to jump directly to the section most relevant to your role. Each
+  section is designed to be self-contained.
+\end{ugTip}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{How to Use This Guide}
+
+This guide is organized in a progressive structure, starting
+with high-level concepts and moving toward detailed task
+instructions:
+
+\begin{ugSteps}
+  \item \textbf{Sections 2 -- 3} provide system context ---
+    read these first to understand what Insight Doc does and
+    how it is architected.
+  \item \textbf{Section 4} walks you through first-time login
+    and initial setup --- essential for new users.
+  \item \textbf{Section 5} gives a visual tour of the interface
+    --- review this to familiarize yourself with navigation.
+  \item \textbf{Section 6} describes every functional module in
+    detail --- use this as a reference when exploring features.
+  \item \textbf{Section 7} provides step-by-step task guides
+    for common day-to-day activities.
+  \item \textbf{Sections 8 -- 9} cover troubleshooting and FAQ
+    --- consult these when you encounter issues.
+  \item \textbf{Sections 10 -- 12} contain best practices, the
+    glossary, and appendices --- reference materials for
+    advanced usage.
+\end{ugSteps}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Related Documents}
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Document} & \textbf{Description} \\
+  \midrule
+  System Blueprint
+    & Technical architecture, data model, and feature
+      specifications for the Insight Doc platform \\
+  API Endpoint Map
+    & Complete mapping of frontend menus to backend API
+      endpoints with role restrictions \\
+  Dashboard Design Guide
+    & Layout wireframes, chart specifications, and UI
+      component guidelines for each role-based dashboard \\
+  Keycloak Administration Guide
+    & Instructions for managing users, roles, and SSO
+      configuration in the Keycloak identity provider \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Support Channels}
+
+If you need assistance beyond what this guide covers:
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Channel} & \textbf{Contact}
+    & \textbf{When to Use} \\
+  \midrule
+  IT Help Desk
+    & \texttt{helpdesk@sindika.co.id}
+    & Account issues, login problems, role assignment
+      requests \\
+  Phone
+    & Extension \textbf{4500}
+    & Urgent issues requiring immediate assistance \\
+  System Admin
+    & Via your department manager
+    & Master data changes, bulk operations, configuration
+      requests \\
+  \bottomrule
+\end{tabularx}
+
+\newpage

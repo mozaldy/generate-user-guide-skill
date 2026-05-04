@@ -1,9 +1,9 @@
 % ============================================================================
 % User Guide — Main Entry Point
 % ============================================================================
-% Build:  cd docs && tectonic user-guide-<app-slug>.tex
-% Output: docs/user-guide-<app-slug>.pdf
-% Note: rename this file to user-guide-<app-slug>.tex per project.
+% Build:  .\build.ps1                (recommended — PowerShell)
+%         cmd /c build.bat           (alternative — Command Prompt)
+% Output: build\userguide.pdf
 % ============================================================================
 \documentclass[11pt, a4paper]{article}
 \usepackage{userguide}
@@ -19,33 +19,33 @@
 
 % ── Document Control ──────────────────────────────────────────────────────
 \input{sections/01-document-control}
-\clearpage
 
 % ── Table of Contents ─────────────────────────────────────────────────────
 \tableofcontents
-\clearpage
+\newpage
 
 % ── Main Sections ─────────────────────────────────────────────────────────
 \input{sections/02-introduction}
-\clearpage
 \input{sections/03-system-overview}
-\clearpage
 \input{sections/04-getting-started}
-\clearpage
 \input{sections/05-ui-overview}
-\clearpage
-\input{sections/06-core-features}
-\clearpage
+\input{sections/06-01-document-management}
+\input{sections/06-02-versioning}
+\input{sections/06-03-approval-workflow}
+\input{sections/06-04-document-preview}
+\input{sections/06-05-secure-download}
+\input{sections/06-06-share-links}
+\input{sections/06-07-access-control}
+\input{sections/06-08-audit-analytics}
+\input{sections/06-09-dashboard-analytics}
+\input{sections/06-10-ai-intelligence}
+\input{sections/06-11-master-data}
+\input{sections/06-12-lifecycle-management}
 \input{sections/07-common-tasks}
-\clearpage
 \input{sections/08-troubleshooting}
-\clearpage
 \input{sections/09-faq}
-\clearpage
 \input{sections/10-best-practices}
-\clearpage
 \input{sections/11-glossary}
-\clearpage
 \input{sections/12-appendix}
 
 \end{document}

@@ -1,55 +1,712 @@
+% ============================================================================
+% 8. Core Features / Functional Modules
+% ============================================================================
 \section{Core Features}
 
-% Structure this chapter by feature, not by one giant screenshot.
-% Each feature can have multiple modules and each module should be explained
-% using one container screenshot per card / table / form area.
-% Use source code to identify what each module contains and what each
-% container is called in the live UI.
+% ══════════════════════════════════════════════════════════════════
+% Module 1: Document Management
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 1 --- Document Management}
 
-\subsection{FEATURE\_NAME}
+  \textbf{Purpose:}
+  Upload, organize, search, and manage PDF documents with rich
+  metadata, automatic text extraction, and thumbnail generation.
 
-\begin{ugModule}{Module Name}
-  \textbf{Purpose}
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager} \ugRole{Staff}
 
-  Short explanation of what this module is for.
-
-  \textbf{Who can access}
-
-  State the roles or users that can open this module.
-
-  \textbf{Key functions}
-  \begin{itemize}
-    \item Main action one.
-    \item Main action two.
-    \item Main action three.
+  \subsubsection*{Key Functions}
+  \begin{itemize}[leftmargin=18pt]
+    \item \textbf{Upload} --- Upload PDF files with automatic
+      validation (MIME type, magic bytes, file size limit)
+    \item \textbf{Metadata} --- Assign title, description, tags,
+      document type, organizational unit, and effective date
+    \item \textbf{Categorize} --- Group documents by type
+      (SOP, SK, Proposal, Report, etc.) and unit
+    \item \textbf{Search} --- Full-text search across titles,
+      tags, descriptions, and extracted document content
+    \item \textbf{Browse} --- Paginated list view with filtering
+      and sorting, or thumbnail grid view
+    \item \textbf{Thumbnail} --- Auto-generated thumbnail from
+      the first page of each PDF
   \end{itemize}
 
-  \textbf{Step-by-step usage}
+  \subsubsection*{Step-by-Step: Uploading a New Document}
   \begin{ugSteps}
-    \item Open the relevant menu item or container entry point.
-    \ugScreenshot[0.55]{screenshots/feature-module-01.png}{The module entry container}
-    \item Use the main control, button, tab, or filter inside that container.
-    \ugScreenshot[0.35]{screenshots/feature-module-02.png}{The main control container}
-    \item Fill in the required fields or review the list inside the module.
-    \ugScreenshot[0.55]{screenshots/feature-module-03.png}{The form or table container}
-    \item Save or submit your changes.
-    \ugScreenshot[0.35]{screenshots/feature-module-04.png}{The save or submit container}
+    \item Navigate to \ugMenu{Documents > Document List}.
+    \item Click \ugButton{+ Upload Document} in the toolbar.
+    \item Drag and drop a PDF file into the upload dropzone, or
+          click to browse your files.
+    \item Fill in the required fields:
+          \ugField{Title}, \ugField{Document Type},
+          \ugField{Unit}, and optionally \ugField{Tags},
+          \ugField{Description}, \ugField{Effective Date}, and
+          \ugField{Expiry Date}.
+    \item Click \ugButton{Upload} to submit.
   \end{ugSteps}
 
-  \textbf{Business rules}
-  \begin{itemize}
-    \item Rule one that users must follow.
-    \item Rule two that affects validation or access.
-    \item Rule three that affects the result.
+  \subsubsection*{What Happens After Upload}
+  \begin{enumerate}[leftmargin=18pt]
+    \item The file is \textbf{validated} (MIME type, magic bytes,
+          size $\leq$ 50~MB by default).
+    \item A \textbf{SHA-256 checksum} is computed for integrity.
+    \item The file is stored in \textbf{MinIO} object storage at
+          path \texttt{documents/\{id\}/\{version\}/\{filename\}}.
+    \item \textbf{Text is extracted} from all pages (up to 200
+          pages) for full-text search indexing.
+    \item A \textbf{thumbnail} is generated from the first page.
+    \item The document is created with version~1 in
+          \ugStatus{ugMutedText}{Draft} status.
+  \end{enumerate}
+
+  \subsubsection*{Business Rules}
+  \begin{itemize}[leftmargin=18pt]
+    \item Only \texttt{application/pdf} files are accepted.
+    \item Maximum file size is configurable (default: 50~MB).
+    \item Documents with an \ugField{Expiry Date} are
+          automatically denied access after that date.
+    \item Text extraction is non-critical --- a failed extraction
+          does not block the upload.
+  \end{itemize}
+\end{ugModule}
+
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 2: Versioning
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 2 --- Versioning}
+
+  \textbf{Purpose:}
+  Maintain a complete, immutable revision history for every
+  document. Old versions are never modified or deleted.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager} \ugRole{Staff} (owner)
+
+  \subsubsection*{Key Functions}
+  \begin{itemize}[leftmargin=18pt]
+    \item \textbf{Upload Revision} --- Upload a new file to
+      create version~$n+1$; the previous version is preserved
+    \item \textbf{Preview Old Versions} --- View or download
+      any previous version from the document detail page
+    \item \textbf{Update Metadata Only} --- Change title, tags,
+      or description without creating a new file version
+    \item \textbf{File Integrity} --- Each version stores its
+      own SHA-256 checksum for tamper verification
   \end{itemize}
 
-  \textbf{Expected result}
+  \subsubsection*{Step-by-Step: Uploading a Revision}
+  \begin{ugSteps}
+    \item Navigate to the document's detail page.
+    \item Click \ugButton{Upload Revision}.
+    \item Select the new PDF file.
+    \item The system automatically increments the version number,
+          computes a new checksum, extracts text, and stores the
+          file.
+    \item The \ugField{Current Version} indicator updates to
+          reflect the latest version.
+  \end{ugSteps}
 
-  Describe what should happen after the user completes the module.
+  \subsubsection*{Version Information Recorded}
+  Each version records: version number, file path, file size,
+  MIME type, SHA-256 checksum, original file name, uploader
+  identity, upload timestamp, and extracted text.
+
+  \subsubsection*{Business Rules}
+  \begin{itemize}[leftmargin=18pt]
+    \item Versions are \textbf{immutable} --- once created, a
+          version cannot be edited or overwritten.
+    \item Metadata updates (title, tags, description) do
+          \textbf{not} create a new file version.
+    \item Only the document owner, \ugRole{Manager}, or
+          \ugRole{Admin} can upload revisions.
+  \end{itemize}
 \end{ugModule}
 
-\begin{ugModule}{Another Module}
-  Repeat the same structure for each module inside the feature.
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 3: Approval Workflow
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 3 --- Approval Workflow}
+
+  \textbf{Purpose:}
+  Route documents through a structured six-status approval
+  lifecycle with full audit trail.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager} \ugRole{Reviewer}
+
+  \subsubsection*{Status Flow}
+  \begin{center}
+    \ugStatus{ugMutedText}{Draft}
+    \;$\longrightarrow$\;
+    \ugStatus{ugWarning}{Review}
+    \;$\longrightarrow$\;
+    \ugStatus{ugInfo}{Approved}
+    \;$\longrightarrow$\;
+    \ugStatus{ugSuccess}{Active}
+    \;$\longrightarrow$\;
+    \ugStatus{ugAccent}{Archived}
+  \end{center}
+  \begin{center}
+    \ugStatus{ugWarning}{Review}
+    \;$\longrightarrow$\;
+    \ugStatus{ugDanger}{Rejected}
+    \;$\longrightarrow$\;
+    \ugStatus{ugMutedText}{Draft}
+    \quad\textit{(revision cycle)}
+  \end{center}
+
+  \subsubsection*{Key Functions}
+  \begin{itemize}[leftmargin=18pt]
+    \item \textbf{Submit for Review} --- Move from Draft to Review
+    \item \textbf{Approve} --- Move from Review to Approved
+    \item \textbf{Reject} --- Move from Review to Rejected
+      (mandatory comment required)
+    \item \textbf{Activate} --- Move from Approved to Active
+    \item \textbf{Archive} --- Move from Active to Archived
+      (manual or auto-expiry)
+  \end{itemize}
+
+  \subsubsection*{Step-by-Step: Reviewing a Document}
+  \begin{ugSteps}
+    \item Navigate to \ugMenu{Approval Center}.
+    \item The list shows all documents with
+          \ugStatus{ugWarning}{Review} status.
+    \item Click a document to open its detail page.
+    \item Review the document content via the in-browser preview.
+    \item Click \ugButton{Approve} to approve, or
+          \ugButton{Reject} to reject.
+    \item If rejecting, enter a \textbf{mandatory comment}
+          explaining the reason for rejection.
+    \item Confirm the action in the modal dialog.
+  \end{ugSteps}
+
+  \subsubsection*{Audit Trail}
+  Every status change is recorded with: who changed the status,
+  when, from which status, to which status, and any comments.
+  The full history is visible on the document's
+  \ugMenu{Status History} tab.
 \end{ugModule}
 
-% Add a separate feature section for each major product area.
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 4: Document Preview
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 4 --- Document Preview}
+
+  \textbf{Purpose:}
+  View documents directly in the browser without downloading.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager} \ugRole{Reviewer} \ugRole{Staff}
+
+  \subsubsection*{Key Functions}
+  \begin{itemize}[leftmargin=18pt]
+    \item \textbf{In-Browser Preview} --- View the full PDF
+      directly in your browser
+    \item \textbf{HTTP Range Streaming} --- Large documents are
+      streamed progressively (HTTP~206 Partial Content) for
+      fast initial display
+    \item \textbf{Version Preview} --- Preview any specific
+      version, not just the latest
+  \end{itemize}
+
+  \subsubsection*{Step-by-Step: Previewing a Document}
+  \begin{ugSteps}
+    \item Navigate to the document detail page.
+    \item Click the \ugButton{Preview} button.
+    \item The PDF opens in the browser's built-in viewer.
+    \item To preview an older version, select the desired version
+          from the \ugField{Version} dropdown, then click
+          \ugButton{Preview}.
+  \end{ugSteps}
+
+  \subsubsection*{Business Rules}
+  \begin{itemize}[leftmargin=18pt]
+    \item Preview serves the original PDF with
+          \texttt{Content-Disposition: inline}.
+    \item Access control (ACL) is enforced --- only authorized
+          users can preview a document.
+    \item Expired documents (past \ugField{Expiry Date}) cannot
+          be previewed.
+  \end{itemize}
+\end{ugModule}
+
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 5: Secure Download
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 5 --- Secure Download}
+
+  \textbf{Purpose:}
+  Provide tamper-proof document downloads with rasterization,
+  embedded watermarking, and rate limiting.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager} \ugRole{Reviewer} \ugRole{Staff}
+
+  \subsubsection*{How It Works}
+  When a document is downloaded:
+  \begin{enumerate}[leftmargin=18pt]
+    \item Each page is \textbf{rasterized} --- converted from
+          vector PDF to an image.
+    \item A \textbf{watermark} is embedded on every page
+          containing:
+          \begin{itemize}[leftmargin=14pt]
+            \item The downloader's full name
+            \item Their IP address
+            \item Download timestamp
+            \item Browser / user agent
+          \end{itemize}
+    \item The images are reassembled into a new PDF.
+    \item The resulting file is delivered to the user.
+  \end{enumerate}
+
+  \begin{ugImportant}
+    The downloaded PDF contains \textbf{image-based pages only}.
+    Text cannot be selected, copied, or extracted. The watermark
+    is permanently embedded in the image and cannot be removed.
+  \end{ugImportant}
+
+  \subsubsection*{Rate Limiting}
+  Downloads are rate-limited to prevent abuse:
+  \begin{itemize}[leftmargin=18pt]
+    \item Default limit: \textbf{10 downloads per user per
+          document per hour}.
+    \item Exceeding the limit returns an error.
+    \item The limit is configurable by the administrator.
+  \end{itemize}
+
+  \subsubsection*{Download Cache}
+  Rasterized results are cached per user. Subsequent downloads
+  of the same document version by the same user are served from
+  cache for optimal performance.
+
+  \subsubsection*{Step-by-Step: Downloading a Document}
+  \begin{ugSteps}
+    \item Navigate to the document detail page.
+    \item Click \ugButton{Download}.
+    \item The system generates the watermarked, rasterized PDF.
+    \item The file downloads automatically to your browser's
+          default download folder.
+  \end{ugSteps}
+\end{ugModule}
+
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 6: Share Links & Download Tokens
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 6 --- Share Links \& Download Tokens}
+
+  \textbf{Purpose:}
+  Share documents with external recipients who do not have
+  system accounts, using secure, controlled links.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager}
+
+  \subsubsection*{Share Links vs.\ Download Tokens}
+  \begin{tabularx}{\textwidth}{@{} l X X @{}}
+    \toprule
+    \textbf{Aspect} & \textbf{Share Link}
+      & \textbf{Download Token} \\
+    \midrule
+    Usage
+      & Reusable (until limit or revoked)
+      & One-time use only \\
+    Validity
+      & Configurable expiry (optional)
+      & Fixed 30 minutes \\
+    Download Limit
+      & Configurable (optional)
+      & Exactly 1 download \\
+    Revocation
+      & Can be revoked at any time
+      & Cannot be revoked \\
+    Use Case
+      & Share with multiple people
+      & Send to one specific recipient \\
+    \bottomrule
+  \end{tabularx}
+
+  \subsubsection*{Step-by-Step: Creating a Share Link}
+  \begin{ugSteps}
+    \item Open the document detail page.
+    \item Navigate to the \ugMenu{Share} tab.
+    \item Click \ugButton{Create Share Link}.
+    \item Optionally set an \ugField{Expiry Date} and
+          \ugField{Max Downloads}.
+    \item Click \ugButton{Generate}.
+    \item Copy the generated link and share it with recipients.
+  \end{ugSteps}
+
+  \subsubsection*{Step-by-Step: Generating a Download Token}
+  \begin{ugSteps}
+    \item Open the document detail page.
+    \item Click \ugButton{Generate Token}.
+    \item A one-time download link is generated (valid for
+          30~minutes).
+    \item Copy and send the link to the intended recipient.
+  \end{ugSteps}
+
+  \subsubsection*{Share Link Validation}
+  When a recipient accesses a share link, the system validates:
+  \begin{enumerate}[leftmargin=18pt]
+    \item Is the token valid and active?
+    \item Has the link expired?
+    \item Has the download limit been reached?
+    \item Is the document still active?
+    \item Has the document passed its expiry date?
+  \end{enumerate}
+
+  If any check fails, access is denied with an appropriate
+  error message.
+\end{ugModule}
+
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 7: Access Control (ACL)
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 7 --- Access Control (ACL)}
+
+  \textbf{Purpose:}
+  Manage fine-grained, per-document access permissions with
+  optional time-limited grants.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager}
+
+  \subsubsection*{Key Functions}
+  \begin{itemize}[leftmargin=18pt]
+    \item \textbf{Grant Access} --- Give a specific user or role
+      access to a document, with an optional expiry date
+    \item \textbf{Revoke Access} --- Remove a user's or role's
+      access to a document immediately
+    \item \textbf{Time-Limited Access} --- Set an
+      \ugField{Expires At} date; access is automatically
+      revoked after that date
+    \item \textbf{View Access List} --- See all users and roles
+      that have access to a document, including expiry status
+  \end{itemize}
+
+  \subsubsection*{Step-by-Step: Granting Access}
+  \begin{ugSteps}
+    \item Open the document detail page.
+    \item Navigate to the \ugMenu{Access} tab.
+    \item Click \ugButton{Grant Access}.
+    \item Select \ugField{Access Type}: ``User'' or ``Role''.
+    \item Search for and select the target user or role.
+    \item Optionally set an \ugField{Expires At} date.
+    \item Click \ugButton{Confirm}.
+  \end{ugSteps}
+
+  \subsubsection*{Access Request Workflow}
+  Users who lack access to a document can request it:
+  \begin{ugSteps}
+    \item The \ugRole{Staff} user views a restricted document
+          and clicks \ugButton{Request Access}.
+    \item They provide a \ugField{Reason} for the request.
+    \item The request enters
+          \ugStatus{ugWarning}{Pending} status.
+    \item An \ugRole{Admin} or \ugRole{Manager} reviews the
+          request and clicks \ugButton{Approve} or
+          \ugButton{Reject}.
+    \item If approved, a \texttt{DocumentAccess} entry is
+          automatically created.
+  \end{ugSteps}
+
+  \subsubsection*{Business Rules}
+  \begin{itemize}[leftmargin=18pt]
+    \item Only one pending request per user per document is
+          allowed (duplicate prevention).
+    \item Expired access entries are flagged with an
+          \texttt{IsExpired} indicator.
+    \item Access is checked during download, preview, and
+          detail view operations.
+  \end{itemize}
+\end{ugModule}
+
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 8: Audit & Analytics
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 8 --- Audit \& Analytics}
+
+  \textbf{Purpose:}
+  Track every document interaction and provide comprehensive
+  analytics for governance and compliance.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager} (full); other roles see
+  limited personal data.
+
+  \subsubsection*{Download Audit Log}
+  Every download is recorded with:
+  \begin{itemize}[leftmargin=18pt]
+    \item User identity (name, user ID)
+    \item IP address
+    \item Geographic location (country, city --- via IP
+          geolocation)
+    \item Browser / user agent
+    \item Timestamp
+    \item Document version downloaded
+  \end{itemize}
+
+  \subsubsection*{Document Statistics}
+  The \ugMenu{Stats} tab on a document detail page shows:
+  \begin{itemize}[leftmargin=18pt]
+    \item Total number of downloads
+    \item Number of unique users who downloaded
+    \item Last 10 downloads with full details
+    \item Top~5 most frequent downloaders
+  \end{itemize}
+
+  \subsubsection*{Unified Activity Timeline}
+  The \ugMenu{Timeline} tab combines six data sources into
+  a single chronological feed:
+
+  \begin{tabularx}{\textwidth}{@{} l l X @{}}
+    \toprule
+    \textbf{Activity Type} & \textbf{Icon}
+      & \textbf{Description} \\
+    \midrule
+    \texttt{created}           & \faUpload
+      & Document was created \\
+    \texttt{updated}           & \faEdit
+      & Metadata was updated \\
+    \texttt{version\_uploaded}  & \faFileAlt
+      & A new revision was uploaded \\
+    \texttt{status\_changed}    & \faExchangeAlt
+      & Status transition (with comment) \\
+    \texttt{downloaded}        & \faDownload
+      & Document was downloaded \\
+    \texttt{access\_granted}    & \faKey
+      & Access was granted to a user/role \\
+    \bottomrule
+  \end{tabularx}
+\end{ugModule}
+
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 9: Dashboard Analytics
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 9 --- Dashboard Analytics}
+
+  \textbf{Purpose:}
+  Provide role-specific dashboards with real-time insights and
+  actionable metrics.
+
+  \textbf{Who Can Access:}
+  All authenticated users (dashboard content varies by role).
+
+  \subsubsection*{Admin / Manager Dashboard}
+  \begin{itemize}[leftmargin=18pt]
+    \item \textbf{Overview Cards} --- Total documents, active,
+      archived, deleted, total versions, storage usage, total
+      downloads, unique users
+    \item \textbf{Download Trend} --- 30-day area chart showing
+      daily download volume
+    \item \textbf{Status Distribution} --- Doughnut chart showing
+      document count per status
+    \item \textbf{Type Distribution} --- Horizontal bar chart
+      by document type (SOP, SK, etc.)
+    \item \textbf{Unit Distribution} --- Horizontal bar chart
+      by organizational unit
+    \item \textbf{Top 10 Documents} --- Most downloaded documents
+      (title, type, download count)
+    \item \textbf{Pending Items} --- Alert cards for review
+      pending, access requests pending, documents expiring
+      within 7~days, and access grants expiring within 7~days
+    \item \textbf{Recent Activity} --- Live feed of the 20 most
+      recent system activities
+  \end{itemize}
+
+  \subsubsection*{Reviewer Dashboard}
+  \begin{itemize}[leftmargin=18pt]
+    \item \textbf{Review Pipeline} --- Stat cards for pending,
+      approved (this month), and rejected (this month)
+    \item \textbf{Status Pipeline} --- Stacked bar visualization
+      of all documents per status
+    \item \textbf{Pending Review Table} --- Documents awaiting
+      review, sorted oldest-first (urgency priority)
+    \item \textbf{Recent Status Changes} --- Timeline of the 20
+      most recent status transitions
+  \end{itemize}
+
+  \subsubsection*{Staff Dashboard}
+  \begin{itemize}[leftmargin=18pt]
+    \item \textbf{My Documents} --- Stat cards for total owned,
+      in review, and rejected
+    \item \textbf{Status Donut} --- Mini donut chart of your
+      documents by status
+    \item \textbf{Draft Quick Actions} --- Card list of your
+      draft documents with Edit and Submit buttons
+    \item \textbf{My Access Requests} --- Status of your pending,
+      approved, and rejected access requests
+    \item \textbf{My Activity Feed} --- Personal timeline of
+      your 15 most recent actions
+  \end{itemize}
+\end{ugModule}
+
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 10: AI-Powered Intelligence
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 10 --- AI-Powered Intelligence}
+
+  \textbf{Purpose:}
+  Enable intelligent document search and natural language Q\&A
+  using a Retrieval-Augmented Generation (RAG) system.
+
+  \textbf{Who Can Access:}
+  All authenticated users.
+
+  \subsubsection*{Full-Text Search}
+  The search bar in the header performs full-text search across:
+  \begin{itemize}[leftmargin=18pt]
+    \item Document titles
+    \item Tags
+    \item Descriptions
+    \item \textbf{Extracted document content} --- the actual text
+      inside the PDF, extracted at upload time
+  \end{itemize}
+
+  \subsubsection*{AI Chat Assistant}
+  The AI Chat feature allows you to ask questions in natural
+  language and receive grounded answers with source citations:
+
+  \begin{ugSteps}
+    \item Open the \ugMenu{AI Chat} panel.
+    \item Type your question in natural language
+          (e.g., ``What is the procedure for equipment
+          procurement?'').
+    \item The system performs hybrid retrieval (dense + sparse
+          search) across all ingested documents.
+    \item Results are reranked by relevance and passed to a
+          language model.
+    \item You receive an answer with source citations
+          (\texttt{[S1]}, \texttt{[S2]}, etc.) linking to the
+          specific document and passage.
+  \end{ugSteps}
+
+  \subsubsection*{How Ingestion Works}
+  When a document is uploaded, the AI Ingest Worker automatically:
+  \begin{enumerate}[leftmargin=18pt]
+    \item Parses the PDF (with OCR for scanned content)
+    \item Chunks the content into semantic segments
+    \item Generates vector embeddings (dense + sparse)
+    \item Stores vectors in the Qdrant vector database
+  \end{enumerate}
+  This process runs asynchronously and does not block the upload.
+
+  \begin{ugTip}
+    The AI Chat provides source citations with every answer.
+    Always click the source links to verify information
+    against the original document.
+  \end{ugTip}
+\end{ugModule}
+
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 11: Master Data Administration
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 11 --- Master Data Administration}
+
+  \textbf{Purpose:}
+  Configure the reference data that drives document
+  categorization, workflow statuses, and access policies.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin}
+
+  \subsubsection*{Document Types}
+  Define the categories of documents your organization manages:
+  \begin{itemize}[leftmargin=18pt]
+    \item Examples: SOP, Surat Keputusan (SK), Proposal,
+      Report, Work Instruction
+    \item Full CRUD via \ugMenu{Settings > Master Data >
+      Document Types}
+  \end{itemize}
+
+  \subsubsection*{Document Statuses}
+  The six default statuses are pre-configured:
+  \ugStatus{ugMutedText}{Draft},
+  \ugStatus{ugWarning}{Review},
+  \ugStatus{ugInfo}{Approved},
+  \ugStatus{ugSuccess}{Active},
+  \ugStatus{ugAccent}{Archived},
+  \ugStatus{ugDanger}{Rejected}.
+  Additional custom statuses can be created if needed.
+
+  \subsubsection*{Organizational Units}
+  Define the organizational structure for document grouping:
+  \begin{itemize}[leftmargin=18pt]
+    \item Examples: IT, HR, Finance, Legal, Operations
+    \item Documents are assigned to a unit for filtering and
+      reporting
+  \end{itemize}
+
+  \subsubsection*{Access Control Lists (ACL Groups)}
+  Define reusable access rule groups that can be assigned to
+  documents for batch access management.
+\end{ugModule}
+
+\vspace{10pt}
+
+% ══════════════════════════════════════════════════════════════════
+% Module 12: Lifecycle Management
+% ══════════════════════════════════════════════════════════════════
+\begin{ugModule}{Module 12 --- Lifecycle Management}
+
+  \textbf{Purpose:}
+  Manage the end-of-life cycle for documents, including soft
+  deletion, restoration, and automatic archiving.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager}
+
+  \subsubsection*{Key Functions}
+  \begin{itemize}[leftmargin=18pt]
+    \item \textbf{Soft Delete} --- Mark a document as inactive
+      (\texttt{IsActive = false}). The document is hidden from
+      active lists but remains in the database and storage.
+    \item \textbf{Restore} --- Recover a soft-deleted document
+      by setting \texttt{IsActive = true}.
+    \item \textbf{Auto-Archive} --- Documents with an
+      \ugField{Expiry Date} are automatically denied access
+      after the date passes and can be transitioned to
+      \ugStatus{ugAccent}{Archived} status.
+    \item \textbf{Audit Trail} --- Every delete and restore
+      action is recorded (who and when).
+  \end{itemize}
+
+  \subsubsection*{Step-by-Step: Deleting and Restoring}
+  \begin{ugSteps}
+    \item Navigate to the document detail page.
+    \item Click the context menu (\,\faEllipsisV\,) and select
+          \ugMenu{Delete}.
+    \item Confirm the deletion in the modal dialog.
+    \item To restore: navigate to \ugMenu{Documents > Trash},
+          find the document, and click \ugButton{Restore}.
+  \end{ugSteps}
+
+  \begin{ugWarning}
+    Soft-deleted documents are \textbf{not} permanently removed.
+    All file data, versions, and audit logs are preserved.
+    Permanent deletion is not available through the user
+    interface.
+  \end{ugWarning}
+\end{ugModule}
+
+\newpage

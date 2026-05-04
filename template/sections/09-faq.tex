@@ -1,7 +1,152 @@
+% ============================================================================
+% 11. Frequently Asked Questions
+% ============================================================================
 \section{Frequently Asked Questions}
 
-% 4--6 \ugFAQ entries. Draw from things that are non-obvious from the UI
-% alone --- behaviour the user might not predict from looking at a screen.
+\ugFAQ{How do I log in to Insight Doc?}{
+  Navigate to the application URL provided by your organization.
+  You will be redirected to the Keycloak SSO login page. Enter
+  your corporate username and password, then complete MFA if
+  enabled. If you do not have an account, contact the IT Help
+  Desk at \texttt{helpdesk@sindika.co.id}.
+}
 
-\ugFAQ{A question users commonly have?}
-{The answer in plain English.}
+\ugFAQ{What file formats can I upload?}{
+  Currently, Insight Doc accepts \textbf{PDF files only}.
+  The system validates both the MIME type
+  (\texttt{application/pdf}) and the file's magic bytes to
+  ensure authenticity. Maximum file size is 50~MB by default.
+}
+
+\ugFAQ{Why is my downloaded PDF different from the original?}{
+  For security, all downloads are \textbf{rasterized} ---
+  each page is converted to an image with an embedded watermark
+  (your name, IP, timestamp, and browser). This prevents
+  text copying, editing, and redistribution. Use
+  \ugButton{Preview} for a native viewing experience.
+}
+
+\ugFAQ{Can I download the original, non-watermarked PDF?}{
+  No. All downloads are processed through the rasterization
+  and watermarking pipeline. This is a security feature to
+  protect organizational knowledge assets. Only the in-browser
+  preview shows the original format.
+}
+
+\ugFAQ{How do I access a document I don't have permission for?}{
+  Click \ugButton{Request Access} on the document detail page,
+  provide a reason, and submit. An \ugRole{Admin} or
+  \ugRole{Manager} will review your request. You can only have
+  one pending request per document at a time.
+}
+
+\ugFAQ{What happens when a document expires?}{
+  Documents with an \ugField{Expiry Date} are automatically
+  denied access after that date. They can no longer be
+  previewed, downloaded, or shared. An \ugRole{Admin} can
+  update the expiry date or archive the document.
+}
+
+\ugFAQ{Can I recover a deleted document?}{
+  Yes. Insight Doc uses \textbf{soft delete} --- documents are
+  marked as inactive but not permanently removed. An
+  \ugRole{Admin} or \ugRole{Manager} can restore deleted
+  documents from \ugMenu{Documents > Trash}.
+}
+
+\ugFAQ{How does versioning work?}{
+  Every time you upload a revision, a new immutable version is
+  created (v1, v2, v3, \ldots). Previous versions are never
+  modified or deleted. You can preview or download any version
+  from the document detail page.
+}
+
+\ugFAQ{What is a download token?}{
+  A download token is a \textbf{one-time-use} signed URL that
+  is valid for 30~minutes. It allows someone without a system
+  account to download a specific document without logging in.
+  After one use, the token is permanently invalidated.
+}
+
+\ugFAQ{What is a share link?}{
+  A share link is a \textbf{reusable} public URL with optional
+  expiry date and download limit. Unlike tokens, share links
+  can be used multiple times until revoked, expired, or the
+  download limit is reached.
+}
+
+\ugFAQ{Why was my review rejected?}{
+  When a \ugRole{Reviewer} rejects a document, they are
+  required to provide a comment explaining the reason.
+  Check the \ugMenu{Status History} tab on the document detail
+  page to read the rejection comment and revise accordingly.
+}
+
+\ugFAQ{How do I change the interface language?}{
+  Click your profile avatar in the top-right corner and select
+  \ugMenu{Language}. Insight Doc supports English and Bahasa
+  Indonesia. The interface reloads immediately in the selected
+  language.
+}
+
+\ugFAQ{What does the AI Chat do?}{
+  The AI Chat allows you to ask questions in natural language
+  about the documents stored in the system. It uses
+  Retrieval-Augmented Generation (RAG) to find relevant passages
+  and provide answers with source citations. Always verify
+  answers by checking the cited sources.
+}
+
+\ugFAQ{Is there a limit on how many documents I can upload?}{
+  There is no hard limit on the number of documents. However,
+  each file must be a valid PDF under 50~MB. Storage capacity
+  is managed by your system administrator.
+}
+
+\ugFAQ{How do I contact support?}{
+  Contact the IT Help Desk at \texttt{helpdesk@sindika.co.id}
+  or extension \textbf{4500}. Include your username, a
+  description of the issue, and a screenshot if possible.
+}
+
+\ugFAQ{Can I upload multiple files at once?}{
+  No, each document upload is a single PDF file. However, you
+  can quickly upload multiple documents in sequence --- the
+  upload form resets after each successful upload, allowing
+  you to immediately start the next one.
+}
+
+\ugFAQ{How will I know when my access request is approved?}{
+  You can check the status of your access requests on the
+  \ugRole{Staff} dashboard under the ``My Access Requests''
+  section. Requests show as
+  \ugStatus{ugWarning}{Pending},
+  \ugStatus{ugSuccess}{Approved}, or
+  \ugStatus{ugDanger}{Rejected}.
+}
+
+\ugFAQ{Can I see who downloaded a document via a share link?}{
+  Share link downloads by anonymous (public) users are logged
+  with the IP address, browser, and timestamp. However, since
+  these users are not authenticated, their identity is recorded
+  as ``Public'' rather than a named user. The download log is
+  visible on the document's \ugMenu{Stats} tab.
+}
+
+\ugFAQ{Why do rasterized downloads look slightly different from
+       the preview?}{
+  The preview shows the original vector PDF, while downloaded
+  files are rasterized (pages converted to images). This means
+  text may appear slightly less sharp, and the file size may
+  increase. This is by design --- rasterization prevents text
+  copying and ensures watermark permanence.
+}
+
+\ugFAQ{Can my role be changed?}{
+  Yes, but only by an \ugRole{Admin}. If you need a role
+  change (e.g., from \ugRole{Staff} to \ugRole{Reviewer}),
+  contact your department manager, who will submit the
+  request to the system administrator.
+}
+
+\newpage

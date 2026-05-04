@@ -1,33 +1,304 @@
-\section{Getting Around}
+% ============================================================================
+% 7. User Interface Overview
+% ============================================================================
+\section{User Interface Overview}
 
-% Capture this chapter as separate containers, not one tall page.
-% Suggested containers: sidebar, top header, KPI row, chart cards, table cards.
-% Use source code to explain what each container is for.
+% ────────────────────────────────────────────────────────────────
+\subsection{Main Layout}
 
-The screen is divided into several containers. The sidebar lets you move between areas of the app. The main area is made of cards and panels that each show one part of the dashboard.
+The Insight Doc interface follows a modern, responsive layout
+composed of five persistent regions:
 
-\subsection{Sidebar container}
-\ugScreenshot[0.7]{screenshots/02-dashboard-sidebar.png}{The sidebar container}
-
-\subsection{KPI cards container}
-\ugScreenshot[0.7]{screenshots/03-dashboard-kpi.png}{The KPI cards container}
-
-\subsection{Analytics cards container}
-\ugScreenshot[0.7]{screenshots/04-dashboard-charts.png}{The analytics cards container}
-
-\subsection{The left-hand menu}
-
-\begin{center}
-\begin{tabular}{p{3cm}p{9cm}}
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
   \toprule
-  \textbf{Menu item} & \textbf{What it does} \\
+  \textbf{Region} & \textbf{Location}
+    & \textbf{Description} \\
   \midrule
-  \ugMenu{Dashboard}    & Takes you back to the home screen \\
-  % Add one row per sidebar nav item found during source exploration.
+  Header
+    & Top bar
+    & Company logo, global search bar, language selector,
+      notification bell, and user profile avatar \\
+  Sidebar
+    & Left panel
+    & Collapsible navigation with role-filtered menu items;
+      grouped by function (Documents, Approval, Settings) \\
+  Workspace
+    & Center
+    & Primary content area --- data grids, forms, document
+      detail views, and dashboards \\
+  Breadcrumb
+    & Above workspace
+    & Hierarchical navigation trail showing your current
+      location within the application \\
+  Footer
+    & Bottom bar
+    & Application version, company name, and copyright \\
   \bottomrule
-\end{tabular}
-\end{center}
+\end{tabularx}
+
+\begin{ugNote}[Responsive Design]
+  The interface adapts to your screen size. On mobile and tablet
+  devices, the sidebar collapses into a hamburger menu. Dashboard
+  widgets stack vertically on screens smaller than 1024px.
+\end{ugNote}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Sidebar Navigation}
+
+The sidebar displays menu items filtered by your role. Common
+navigation groups include:
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Menu Group} & \textbf{Roles}
+    & \textbf{Contents} \\
+  \midrule
+  Dashboard
+    & All
+    & Role-specific analytics dashboard (landing page) \\
+  Documents
+    & All
+    & Document list, upload, detail view, and search \\
+  Approval Center
+    & A, M, R
+    & Approval queue with review actions \\
+  Approval Config
+    & A
+    & Workflow configuration and approval rules \\
+  Master Data
+    & A
+    & Document types, document statuses, organizational
+      units, and ACL groups \\
+  Administration
+    & A
+    & User management, role management, menu
+      configuration, and system settings \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugTip}
+  Click the collapse icon (\,\faAngleDoubleLeft\,) at the bottom
+  of the sidebar to minimize it and gain more workspace area.
+  Click again (\,\faAngleDoubleRight\,) to expand.
+\end{ugTip}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Common UI Elements}
+
+\begin{description}[leftmargin=18pt, style=nextline]
+  \item[\faMousePointer\hspace{4pt}Buttons]
+    Primary actions use purple buttons (e.g., \ugButton{Upload},
+    \ugButton{Save}). Destructive actions use red
+    (e.g., \ugButton{Delete}). Secondary actions use outlined
+    or ghost buttons.
+
+  \item[\faSearch\hspace{4pt}Search Bar]
+    Located in the header. Supports keyword search across
+    document titles, tags, descriptions, and \textbf{extracted
+    content} (full-text search). Type and press \ugKey{Enter}
+    to search.
+
+  \item[\faFilter\hspace{4pt}Filters]
+    Available on all data grid pages. Filter by document type,
+    status, organizational unit, date range, and tags.
+    Active filters are displayed as removable chips above
+    the grid.
+
+  \item[\faTable\hspace{4pt}Data Grid]
+    Paginated, sortable tables for document lists, user lists,
+    and audit logs. Click column headers to toggle ascending/
+    descending sort. Configurable page sizes (10, 25, 50, 100).
+
+  \item[\faTh\hspace{4pt}Thumbnail Grid]
+    An alternative view for the document list that shows
+    documents as cards with their auto-generated thumbnail
+    (first page of the PDF).
+
+  \item[\faBell\hspace{4pt}Notifications]
+    Real-time notification bell in the header. Displays alerts
+    for approval requests, access grants, status changes, and
+    system announcements. Powered by WebSocket (RabbitMQ STOMP).
+
+  \item[\faUpload\hspace{4pt}File Dropzone]
+    Drag-and-drop area for uploading PDF files. Supports
+    click-to-browse as well. Shows upload progress, file
+    validation status, and size information.
+
+  \item[\faEllipsisV\hspace{4pt}Context Menus]
+    Three-dot menus (\,\faEllipsisV\,) on document rows and
+    cards provide quick actions: Preview, Download, Edit,
+    Share, Delete.
+
+  \item[\faHistory\hspace{4pt}Activity Timeline]
+    A chronological feed showing all interactions with a
+    document --- uploads, downloads, status changes, access
+    grants --- with color-coded icons per activity type.
+\end{description}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Status Badges}
+
+Documents and workflows display colored status badges throughout
+the interface:
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Status} & \textbf{Badge}
+    & \textbf{Meaning} \\
+  \midrule
+  Draft
+    & \ugStatus{ugMutedText}{Draft}
+    & Document is being prepared; not yet submitted \\
+  Review
+    & \ugStatus{ugWarning}{Review}
+    & Submitted and awaiting reviewer action \\
+  Approved
+    & \ugStatus{ugInfo}{Approved}
+    & Reviewer has approved; ready for activation \\
+  Active
+    & \ugStatus{ugSuccess}{Active}
+    & Published and accessible to authorized users \\
+  Archived
+    & \ugStatus{ugAccent}{Archived}
+    & Retired or expired; read-only access \\
+  Rejected
+    & \ugStatus{ugDanger}{Rejected}
+    & Reviewer has rejected; returned to Draft for
+      revision \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Modal Dialogs}
+
+Several actions trigger modal dialogs for confirmation or
+data entry:
+
+\begin{itemize}[leftmargin=18pt]
+  \item \textbf{Status Change} --- When changing a document's
+        status (e.g., submitting for review, approving,
+        rejecting), a modal prompts for an optional comment.
+        Comments are \textbf{mandatory} when rejecting.
+  \item \textbf{Access Grant} --- A modal allows selecting a
+        user or role, setting an optional expiry date, and
+        confirming the access grant.
+  \item \textbf{Share Link Creation} --- A modal for configuring
+        the share link's expiry date and maximum download count
+        before generating the link.
+  \item \textbf{Delete Confirmation} --- A confirmation dialog
+        appears before soft-deleting a document, displaying the
+        document title for verification.
+\end{itemize}
 
 \begin{ugNote}
-  If a page has multiple cards, write about them one card at a time instead of describing the whole page in one paragraph.
+  Press \ugKey{Esc} to close any modal dialog without saving.
 \end{ugNote}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Data Grid Operations}
+
+All data grid pages (Document List, User Management, Master Data,
+Audit Logs) share the following interactive capabilities:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Operation} & \textbf{How To} \\
+  \midrule
+  Sort by column
+    & Click any column header. Click again to toggle
+      ascending/descending. A small arrow indicator shows
+      the active sort direction. \\
+  Filter
+    & Use the filter controls above the grid to filter by
+      \ugField{Status}, \ugField{Document Type},
+      \ugField{Unit}, \ugField{Date Range}, or \ugField{Tags}.
+      Active filters appear as removable chips. \\
+  Change page size
+    & Select from the page size dropdown: 10, 25, 50, or 100
+      rows per page. \\
+  Navigate pages
+    & Use the pagination controls at the bottom of the grid
+      (Previous, Next, page numbers, or jump to page). \\
+  Switch view mode
+    & Toggle between list view (\,\faIcon{list}\,) and thumbnail
+      grid view (\,\faIcon{th}\,) using the toolbar buttons.
+      Available on the Document List page. \\
+  Row actions
+    & Click the three-dot menu (\,\faIcon{ellipsis-v}\,) on any row
+      to access context actions (Preview, Download, Edit,
+      Share, Delete). \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Search Syntax}
+
+The global search bar in the header supports the following
+search patterns:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Pattern} & \textbf{Behavior} \\
+  \midrule
+  \texttt{keyword}
+    & Search across document title, tags, description, and
+      extracted content (full-text) \\
+  \texttt{word1 word2}
+    & Match documents containing \textbf{both} words
+      (implicit AND) \\
+  \texttt{"exact phrase"}
+    & Match the exact phrase within any searchable field \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugTip}
+  For structured filtering (by type, status, unit, or date
+  range), use the sidebar filters on the Document List page
+  instead of the search bar. The search bar is optimized for
+  keyword-based discovery.
+\end{ugTip}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Keyboard Shortcuts}
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Shortcut} & \textbf{Action} \\
+  \midrule
+  \ugKey{/}
+    & Focus the global search bar \\
+  \ugKey{Esc}
+    & Close modal dialog or dismiss notification \\
+  \ugKey{Enter}
+    & Submit search query or confirm dialog action \\
+  \ugKey{Tab}
+    & Move focus to the next interactive element \\
+  \ugKey{Shift}+\ugKey{Tab}
+    & Move focus to the previous interactive element \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Accessibility}
+
+Insight Doc follows modern web accessibility practices:
+
+\begin{itemize}[leftmargin=18pt]
+  \item \textbf{Keyboard navigation} --- All interactive elements
+        (buttons, links, form fields, menus) are reachable via
+        \ugKey{Tab} and activatable via \ugKey{Enter} or
+        \ugKey{Space}.
+  \item \textbf{Focus indicators} --- A visible focus ring
+        highlights the currently focused element for keyboard
+        users.
+  \item \textbf{Semantic HTML} --- The application uses
+        appropriate ARIA roles and labels for screen reader
+        compatibility.
+  \item \textbf{Color contrast} --- Status badges and buttons
+        meet WCAG~2.1 AA contrast ratio requirements.
+  \item \textbf{Responsive design} --- The interface adapts to
+        screen sizes from mobile (320px) to ultra-wide
+        monitors (2560px+).
+\end{itemize}
+
+\newpage

@@ -1,0 +1,39 @@
+% ============================================================================
+% userguide-typography.sty
+% ============================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{userguide-typography}[2026/04/30 v1.0 User Guide Typography]
+
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{lmodern}
+\renewcommand{\familydefault}{\sfdefault}
+\RequirePackage{titlesec}
+\RequirePackage{titletoc}
+\RequirePackage{microtype}
+\RequirePackage{parskip}
+
+% Section Formatting
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{ugPrimary}}
+  {\thesection}{1em}{}
+  [\vspace{2pt}{\color{ugSecondary}\titlerule[1.2pt]}]
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{ugPrimary}}
+  {\thesubsection}{0.8em}{}
+
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{ugSecondary}}
+  {\thesubsubsection}{0.6em}{}
+
+\titlespacing*{\section}{0pt}{20pt}{10pt}
+\titlespacing*{\subsection}{0pt}{14pt}{6pt}
+\titlespacing*{\subsubsection}{0pt}{10pt}{4pt}
+
+% Glossary Entry
+\newcommand{\ugGlossaryEntry}[2]{%
+  \noindent\textbf{\color{ugPrimary}#1}\hspace{1em}---\hspace{0.5em}#2\par\vspace{3pt}%
+}
+
+\endinput

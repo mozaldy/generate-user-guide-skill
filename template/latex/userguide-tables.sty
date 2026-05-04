@@ -1,0 +1,32 @@
+% ============================================================================
+% userguide-tables.sty
+% ============================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{userguide-tables}[2026/04/30 v1.0 User Guide Tables]
+
+\RequirePackage{booktabs}
+\RequirePackage{tabularx}
+\RequirePackage{longtable}
+\RequirePackage{array}
+\RequirePackage{colortbl}
+\RequirePackage{multirow}
+
+% Error / Troubleshooting Table
+\newenvironment{ugErrorTable}{%
+  \noindent
+  \begin{tabular}{@{} p{0.27\textwidth} p{0.29\textwidth} p{0.36\textwidth} @{}}
+    \toprule
+    \rowcolor{ugTableHead}
+    \textcolor{white}{\textbf{Error Message}} &
+    \textcolor{white}{\textbf{Possible Cause}} &
+    \textcolor{white}{\textbf{Resolution}} \\
+    \midrule
+}{%
+    \bottomrule
+  \end{tabular}
+}
+\newcommand{\ugError}[3]{%
+  \small\texttt{#1} & \small #2 & \small #3 \\ \midrule
+}
+
+\endinput

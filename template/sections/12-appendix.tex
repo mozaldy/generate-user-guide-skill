@@ -1,19 +1,233 @@
+% ============================================================================
+% 14. Appendix
+% ============================================================================
 \section{Appendix}
 
-\subsection{Keyboard Shortcuts}
+% ────────────────────────────────────────────────────────────────
+\subsection{Appendix A: Document Status Codes}
 
-\begin{center}
-\begin{tabular}{p{4cm}p{9cm}}
+\begin{tabularx}{\textwidth}{@{} l l l X @{}}
   \toprule
-  \textbf{Key} & \textbf{What it does} \\
+  \textbf{Code} & \textbf{Status} & \textbf{Badge}
+    & \textbf{Description} \\
   \midrule
-  \ugKey{Esc}              & Closes any open pop-up window without saving \\
-  \ugKey{Tab}              & Moves the cursor to the next field in a form \\
-  \ugKey{Enter}            & Submits the current form (in most pop-up windows) \\
-  \ugKey{Shift} + \ugKey{Tab} & Moves the cursor back to the previous field \\
+  DRAFT
+    & Draft
+    & \ugStatus{ugMutedText}{Draft}
+    & Document is being prepared; not yet submitted
+      for review \\
+  REVIEW
+    & Review
+    & \ugStatus{ugWarning}{Review}
+    & Submitted and awaiting reviewer action \\
+  APPROVED
+    & Approved
+    & \ugStatus{ugInfo}{Approved}
+    & Reviewer has approved; ready for activation \\
+  ACTIVE
+    & Active
+    & \ugStatus{ugSuccess}{Active}
+    & Published and accessible to authorized users \\
+  ARCHIVED
+    & Archived
+    & \ugStatus{ugAccent}{Archived}
+    & Retired or expired; read-only access \\
+  REJECTED
+    & Rejected
+    & \ugStatus{ugDanger}{Rejected}
+    & Reviewer has rejected; returned to Draft for
+      revision \\
   \bottomrule
-\end{tabular}
-\end{center}
+\end{tabularx}
 
-% Optional: add quick-reference tables for content variants, status codes,
-% field length limits, etc., depending on the app.
+% ────────────────────────────────────────────────────────────────
+\subsection{Appendix B: Status Transition Rules}
+
+\begin{tabularx}{\textwidth}{@{} l l l X @{}}
+  \toprule
+  \textbf{From} & \textbf{To} & \textbf{Who}
+    & \textbf{Notes} \\
+  \midrule
+  Draft & Review
+    & Owner
+    & Submit for approval \\
+  Review & Approved
+    & \ugRole{Reviewer}
+    & Approve the document \\
+  Review & Rejected
+    & \ugRole{Reviewer}
+    & Reject with mandatory comment \\
+  Approved & Active
+    & \ugRole{Admin}, \ugRole{Manager}
+    & Publish and make accessible \\
+  Active & Archived
+    & \ugRole{Admin}, \ugRole{Manager}
+    & Manual archive or auto-expiry \\
+  Rejected & Draft
+    & Owner
+    & Revise and resubmit \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Appendix C: User Roles \& Permissions Matrix}
+
+\begin{tabularx}{\textwidth}{@{} X c c c c @{}}
+  \toprule
+  \textbf{Action}
+    & \ugRole{Admin}
+    & \ugRole{Manager}
+    & \ugRole{Reviewer}
+    & \ugRole{Staff} \\
+  \midrule
+  Upload document          & \faIcon{check} & \faIcon{check} & ---        & \faIcon{check} \\
+  Edit metadata            & \faIcon{check} & \faIcon{check} & ---        & Owner \\
+  Upload revision          & \faIcon{check} & \faIcon{check} & ---        & Owner \\
+  Submit for review        & \faIcon{check} & \faIcon{check} & ---        & Owner \\
+  Approve / Reject         & \faIcon{check} & \faIcon{check} & \faIcon{check} & --- \\
+  Activate document        & \faIcon{check} & \faIcon{check} & ---        & --- \\
+  Archive document         & \faIcon{check} & \faIcon{check} & ---        & --- \\
+  Preview document         & \faIcon{check} & \faIcon{check} & \faIcon{check} & \faIcon{check} \\
+  Download (watermarked)   & \faIcon{check} & \faIcon{check} & \faIcon{check} & \faIcon{check} \\
+  Grant / Revoke access    & \faIcon{check} & \faIcon{check} & ---        & --- \\
+  Create share link        & \faIcon{check} & \faIcon{check} & ---        & --- \\
+  Generate download token  & \faIcon{check} & \faIcon{check} & \faIcon{check} & \faIcon{check} \\
+  Request access           & ---        & ---        & ---        & \faIcon{check} \\
+  Delete / Restore         & \faIcon{check} & \faIcon{check} & ---        & --- \\
+  Manage master data       & \faIcon{check} & ---        & ---        & --- \\
+  Manage users / roles     & \faIcon{check} & ---        & ---        & --- \\
+  View admin dashboard     & \faIcon{check} & \faIcon{check} & ---        & --- \\
+  View reviewer dashboard  & ---        & ---        & \faIcon{check} & --- \\
+  View staff dashboard     & ---        & ---        & ---        & \faIcon{check} \\
+  Use AI Chat              & \faIcon{check} & \faIcon{check} & \faIcon{check} & \faIcon{check} \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Appendix D: Default Configuration Values}
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Setting} & \textbf{Default}
+    & \textbf{Description} \\
+  \midrule
+  Max File Size
+    & 50 MB
+    & Maximum upload file size per document \\
+  Allowed Content Types
+    & \texttt{application/pdf}
+    & Accepted file MIME types \\
+  Max Downloads Per Hour
+    & 10
+    & Rate limit per user per document per hour \\
+  Download Token Validity
+    & 30 minutes
+    & Duration before a download token expires \\
+  Text Extraction Page Limit
+    & 200 pages
+    & Maximum pages processed for full-text extraction \\
+  Thumbnail Source
+    & Page 1
+    & Which page is used for thumbnail generation \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Appendix E: Supported Browsers}
+
+\begin{tabularx}{\textwidth}{@{} l l l @{}}
+  \toprule
+  \textbf{Browser} & \textbf{Minimum Version}
+    & \textbf{Status} \\
+  \midrule
+  Google Chrome     & 120+ & \ugStatus{ugSuccess}{Fully Supported} \\
+  Mozilla Firefox   & 115+ & \ugStatus{ugSuccess}{Fully Supported} \\
+  Microsoft Edge    & 120+ & \ugStatus{ugSuccess}{Fully Supported} \\
+  Safari            & 17+  & \ugStatus{ugWarning}{Partial Support} \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugNote}
+  Safari has limited support for WebSocket-based real-time
+  notifications. All other features function normally.
+  Internet Explorer is \textbf{not supported}.
+\end{ugNote}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Appendix F: Technology Stack Reference}
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Category} & \textbf{Technology}
+    & \textbf{Purpose} \\
+  \midrule
+  Backend Framework & .NET 9 (ASP.NET Core)
+    & Core API and business logic \\
+  Frontend Framework & React 19 + TypeScript 5.8
+    & User interface and SPA \\
+  Build Tool & Vite 7
+    & Frontend build and HMR \\
+  UI Components & Radix UI + shadcn/ui
+    & Accessible, composable UI primitives \\
+  State Management & Zustand
+    & Client-side state stores \\
+  Server State & TanStack Query + Axios
+    & API data fetching and caching \\
+  Styling & Tailwind CSS 4
+    & Utility-first CSS framework \\
+  Charts & Recharts, ApexCharts, uPlot
+    & Dashboard analytics visualization \\
+  Animations & Motion
+    & UI transitions and micro-animations \\
+  Internationalization & React Intl
+    & English and Indonesian (i18n) \\
+  Real-time & STOMP.js / RabbitMQ
+    & WebSocket-based notifications \\
+  Maps & Leaflet
+    & Geographic download visualization \\
+  Database & PostgreSQL 14+ (EF Core)
+    & Primary relational data store \\
+  Cache & Redis
+    & Caching and message streaming \\
+  Object Storage & MinIO (S3-compatible)
+    & File and document storage \\
+  Identity & Keycloak (OIDC)
+    & SSO and JWT authentication \\
+  Vector Database & Qdrant
+    & Semantic search and RAG retrieval \\
+  Embeddings & BAAI/bge-m3
+    & Dense (1024d) + sparse vectors \\
+  Reranking & BAAI/bge-reranker-base
+    & Cross-encoder reranking \\
+  LLM & Google Gemini 2.5 Flash
+    & Chat, query routing, and answers \\
+  PDF Processing & Docnet.Core, PdfSharpCore
+    & Rendering, rasterization, text extraction \\
+  OCR & Tesseract
+    & Text extraction from scanned PDFs \\
+  PDF Parsing (AI) & Docling
+    & Structure-aware PDF parsing for RAG \\
+  Container & Docker
+    & Multi-stage builds and deployment \\
+  CI/CD & GitLab CI
+    & Automated build and deploy pipelines \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Appendix G: Contact Information}
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Contact} & \textbf{Details} \\
+  \midrule
+  IT Help Desk
+    & \texttt{helpdesk@sindika.co.id} \\
+  Phone Extension
+    & \textbf{4500} \\
+  Company Website
+    & \texttt{https://sindika.co.id} \\
+  Office Address
+    & Jl.\ Japfa Indoland Center, Japfa Tower II, Surabaya \\
+  \bottomrule
+\end{tabularx}
