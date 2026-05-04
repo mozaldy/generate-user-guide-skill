@@ -53,13 +53,21 @@ Default fallback template for this skill repo:
 ```
 
 Supported template sources:
-- a template directory containing `userguide.sty`, `userguide-example.tex`, and `sections/`
+- a template directory containing `userguide-example.tex`, `latex/`, `sections/`, and `img/`
 - a ZIP/archive that can be unpacked into a template directory
 - a template bundle file or folder the user points to explicitly
 
 Canonical template contents to mirror:
-- `userguide.sty`
 - `userguide-example.tex`
+- `latex/userguide.sty`
+- `latex/userguide-boxes.sty`
+- `latex/userguide-code.sty`
+- `latex/userguide-colors.sty`
+- `latex/userguide-layout.sty`
+- `latex/userguide-lists.sty`
+- `latex/userguide-tables.sty`
+- `latex/userguide-titlepage.sty`
+- `latex/userguide-typography.sty`
 - `sections/00-metadata.tex`
 - `sections/01-document-control.tex`
 - `sections/02-introduction.tex`
@@ -73,9 +81,9 @@ Canonical template contents to mirror:
 - `sections/10-best-practices.tex`
 - `sections/11-glossary.tex`
 - `sections/12-appendix.tex`
-- `images/` — screenshot and icon assets
-- `build/` — compiled output directory
-- `build.ps1` / `build.bat` — wrappers if present in the template
+- `img/` — logo and cover assets
+- `Makefile`, `build.ps1`, `build.bat` — wrappers if present in the template
+
 
 Important template conventions:
 - all section files use `«...»` placeholder syntax and every placeholder must be replaced
@@ -166,12 +174,13 @@ mkdir -p docs/sections
 mkdir -p docs/ui/buttons docs/ui/fields docs/ui/menu
 
 # Copy template files (always overwrite to stay on latest template)
-cp "$TEMPLATE_ROOT/userguide.sty"          docs/userguide.sty
+cp "$TEMPLATE_ROOT/latex/"*.sty       docs/
 cp "$TEMPLATE_ROOT/userguide-example.tex"  docs/user-guide-<APP_SLUG>.tex
-cp "$TEMPLATE_ROOT/sections/"*.tex         docs/sections/
+cp "$TEMPLATE_ROOT/sections/"*.tex    docs/sections/
+cp -R "$TEMPLATE_ROOT/img"             docs/
 ```
 
-The .sty is already patched. Do not edit it for tectonic compatibility — that work is done.
+The LaTeX support files are already in the template. Do not rewrite them for tectonic compatibility — use the template as-is and override only project-specific values.
 
 ---
 
@@ -445,7 +454,7 @@ If errors:
 cd docs && tectonic --print user-guide-<APP_SLUG>.tex 2>&1 | grep -i "error\|not found"
 ```
 
-If you see Overfull `\hbox` warnings near `\ugField` in tables: the field PNG is wider than the column allows. The `\ugElemImgField` macro caps width at 2.9cm by default for `p{3cm}` columns. If your tables use narrower columns, either widen them or reduce the cap (in `userguide.sty`, search `width=2.9cm`).
+If you see Overfull `\hbox` warnings near `\ugField` in tables: the field PNG is wider than the column allows. If your tables use narrower columns, either widen them or reduce the inline image width in the template macros.
 
 Common errors and fixes:
 - `File '...' not found` for an inline UI image → the PNG slug doesn't match the `\ifstrequal` key in `ui-overrides.tex`. Re-check spelling (case-sensitive label, slug must be lowercase-hyphenated).
