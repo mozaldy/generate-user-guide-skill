@@ -10,59 +10,121 @@ Do NOT invoke for: API docs, code docs, README files, or developer-facing docs.
 
 ## Arguments
 
-Expect from user (prompt if missing):
-- `TARGET_ROUTE` — section of the app to document (e.g. `/admin`)
-- `BASE_URL` — live deployment URL (e.g. `https://myapp.com`)
+Use this intake order. Ask only for missing items.
+
+Required from user:
+- `TARGET_ROUTE` — section of the app to document, for example `/admin`
+- `BASE_URL` — live deployment URL, for example `https://myapp.com`
 - `EMAIL` — login email
 - `PASSWORD` — login password
 
-Optional (ask if not provided):
-- `APP_NAME` — display name for the app (default: infer from project)
-- `COMPANY` — company name (default: blank)
+Template input:
+- `TEMPLATE_SOURCE` — template folder, template file, or ZIP/archive path
 
-Derive `APP_SLUG` = lowercase-hyphenated `APP_NAME` (e.g. "Adibasa" → `adibasa`).
+Optional:
+- `APP_NAME` — display name for the app, default: infer from project
+- `COMPANY` — company name, default: blank
+
+Template rule:
+- If the user gives `TEMPLATE_SOURCE`, use it.
+- If the user does not answer about the template, use the bundled fallback template at `/home/ubuntu/generate-user-guide-skill/template`.
+- If the user asks where the template is stored and gives no other location, answer with the fallback path and proceed with that source.
+
+Derive `APP_SLUG` by lowercasing and hyphenating `APP_NAME` (for example, `Adibasa` → `adibasa`).
 The working `.tex` and final `.pdf` are both named `user-guide-<APP_SLUG>`.
+
+Copy-ready intake prompt:
+- Target route:
+- Base URL:
+- Email:
+- Password:
+- Template source: (optional; if blank, use the bundled fallback)
+- App name: (optional)
+- Company: (optional)
 
 ---
 
 ## Template location
 
-```
-~/.claude/skills/generate-user-guide/template/
-  userguide.sty           ← pre-patched style — DO NOT modify in template
-  userguide-example.tex   ← main document skeleton
-  sections/00-metadata.tex
-  sections/01-document-control.tex
-  ...
-  sections/12-appendix.tex
+Default fallback template for this skill repo:
+
+```text
+/home/ubuntu/generate-user-guide-skill/template/
 ```
 
-The bundled `userguide.sty` is already patched for tectonic/XeLaTeX:
-- fontawesome5 → Unicode stubs (otherwise tectonic crashes loading the OTF)
-- `\let\@ugLogoPath\empty` and `\@ugCoverImagePath\empty` (XeLaTeX `\ifx` fix)
-- `\ugElemImg` / `\ugElemImgField` / `\ugElemImgMenu` macros
-- `\let\ugButtonOrig\ugButton` etc. (originals saved for fallback)
-- `\InputIfFileExists{ui-overrides.tex}{}{}` (per-project overrides loaded if present)
+Supported template sources:
+- a template directory containing `userguide.sty`, `userguide-example.tex`, and `sections/`
+- a ZIP/archive that can be unpacked into a template directory
+- a template bundle file or folder the user points to explicitly
 
-The bundled `sections/` are skeleton stubs. The skill replaces their content per project, but unedited stubs still compile.
+Canonical template contents to mirror:
+- `userguide.sty`
+- `userguide-example.tex`
+- `sections/00-metadata.tex`
+- `sections/01-document-control.tex`
+- `sections/02-introduction.tex`
+- `sections/03-system-overview.tex`
+- `sections/04-getting-started.tex`
+- `sections/05-ui-overview.tex`
+- `sections/06-core-features.tex`
+- `sections/07-common-tasks.tex`
+- `sections/08-troubleshooting.tex`
+- `sections/09-faq.tex`
+- `sections/10-best-practices.tex`
+- `sections/11-glossary.tex`
+- `sections/12-appendix.tex`
+- `images/` — screenshot and icon assets
+- `build/` — compiled output directory
+- `build.ps1` / `build.bat` — wrappers if present in the template
+
+Important template conventions:
+- all section files use `«...»` placeholder syntax and every placeholder must be replaced
+- `06-core-features.tex` is the most important section and should be expanded for every major feature module
+- every user-facing step should include a screenshot reference or `\ugScreenshotPlaceholder`
+- button and icon references should use the template's inline commands such as `\ugButton{...}`, `\ugButtonIcon{...}`, `\ugIconRef{...}` when available
+- the template's structure and section order are the source of truth; do not invent a different hierarchy unless the user explicitly asks for one
+
+The bundled `userguide.sty` should already include tectonic-safe adjustments, such as:
+- Unicode stubs instead of FontAwesome5 OTF loads
+- `\let\@ugLogoPath\empty` and `\let\@ugCoverImagePath\empty`
+- inline image macros for buttons / fields / menus
+- `\InputIfFileExists{ui-overrides.tex}{}{}` for project-specific overrides
+
+If the user supplies a ZIP template, normalize it into the skill workspace shape rather than inventing a new file hierarchy. The conversion rule is:
+- keep the ZIP’s section ordering and placeholder content as the source of truth
+- mirror it into the skill workspace under the expected Hermes layout
+- preserve the repo’s LaTeX semantics, but adapt file placement so the skill can operate consistently
+- if the user asks for a different structure, change only the final PDF’s section organization, not the underlying template source format
+
+Do not patch `userguide.sty` for tectonic compatibility during each project. Keep the template stable and override only project-specific values.
 
 ---
 
-## Workflow (follow in order)
+## Workflow
 
-### Step 1 — Explore source code
+### Step 0 — Resolve the template source
+Before doing anything else, determine which template source to use:
+1. If the user provided a template path, use that.
+2. If the user provided a ZIP/archive, unpack it and use the unpacked template folder.
+3. If the user did not answer about the template, use the repo fallback template at `/home/ubuntu/generate-user-guide-skill/template`.
 
-Spawn an **Explore subagent** targeting `TARGET_ROUTE`. Search in `app/`, `pages/`, `src/app/`, `src/pages/`.
+If the template source is ambiguous, ask for one of these:
+- path to the template folder
+- path to the ZIP/archive
+- file location where the template is stored
+
+### Step 1 — Explore the source / app
+Spawn an Explore subagent targeting `TARGET_ROUTE`. Search in `app/`, `pages/`, `src/app/`, `src/pages/`.
 
 Return:
-- Every route/page under the target
-- What each page does (list, detail, form, modal, upload, search, etc.)
-- Navigation structure (sidebar, breadcrumbs, tabs)
-- All interactive actions: add, edit, delete, search, filter, upload
-- For every form/modal: every field label (the **exact** label text — used as the inline-screenshot lookup key), input type, required/optional, what it accepts
-- Forms that change fields based on a type/category selection — list **each variant separately**
-- Any domain-specific terms worth defining in a glossary
-- Anything that commonly confuses new users (for FAQ + troubleshooting)
+- every route/page under the target
+- what each page does (list, detail, form, modal, upload, search, etc.)
+- navigation structure (sidebar, breadcrumbs, tabs)
+- all interactive actions: add, edit, delete, search, filter, upload
+- for every form/modal: every field label (the exact label text — used as the inline-screenshot lookup key), input type, required/optional, what it accepts
+- forms that change fields based on a type/category selection — list each variant separately
+- any domain-specific terms worth defining in a glossary
+- anything that commonly confuses new users (for FAQ + troubleshooting)
 
 Produce a numbered list of user flows before proceeding.
 
@@ -93,20 +155,22 @@ brew install tectonic
 
 ### Step 3 — Set up docs directory
 
+Use the chosen template source, but keep the repo fallback as the default if the user did not provide a different one.
+
 ```bash
-SKILL_TEMPLATE=~/.claude/skills/generate-user-guide/template
+TEMPLATE_ROOT="${TEMPLATE_SOURCE:-/home/ubuntu/generate-user-guide-skill/template}"
 
 mkdir -p docs/screenshots
 mkdir -p docs/sections
 mkdir -p docs/ui/buttons docs/ui/fields docs/ui/menu
 
 # Copy template files (always overwrite to stay on latest template)
-cp "$SKILL_TEMPLATE/userguide.sty"          docs/userguide.sty
-cp "$SKILL_TEMPLATE/userguide-example.tex"  docs/user-guide-<APP_SLUG>.tex
-cp "$SKILL_TEMPLATE/sections/"*.tex         docs/sections/
+cp "$TEMPLATE_ROOT/userguide.sty"          docs/userguide.sty
+cp "$TEMPLATE_ROOT/userguide-example.tex"  docs/user-guide-<APP_SLUG>.tex
+cp "$TEMPLATE_ROOT/sections/"*.tex         docs/sections/
 ```
 
-The .sty is already patched. **Do not edit it for tectonic compatibility** — that work is done.
+The .sty is already patched. Do not edit it for tectonic compatibility — that work is done.
 
 ---
 
@@ -234,7 +298,7 @@ async function saveMenu(page, label) {
 // and call save* for every label visible there.
 ```
 
-**Important:** the `\ugField{Foo}` lookup uses the **exact label string** from the source code (e.g. `<FormLabel>Foo</FormLabel>`) — not a paraphrased / user-friendly version. Capture using the same string. If the UI label is `SRS Challenge Count`, the section text should write `\ugField{SRS Challenge Count}`, not `\ugField{Review Count}`.
+**Important:** the `\ugField{Foo}` lookup uses the exact label string from the source code (e.g. `<FormLabel>Foo</FormLabel>`) — not a paraphrased / user-friendly version. Capture using the same string. If the UI label is `SRS Challenge Count`, the section text should write `\ugField{SRS Challenge Count}`, not `\ugField{Review Count}`.
 
 For dynamic-text buttons (e.g. `Upload N Image(s)` where N changes), capture only if the label is stable enough to match in the UI. Otherwise let them fall back to styled text.
 
@@ -313,7 +377,7 @@ Replace each skeleton in `docs/sections/` with project-specific content. Use onl
 - Short sentences, active voice
 - Field descriptions: say what user should type, not what system stores
 
-**Inline UI element rule:** when referencing a button / field / menu item, use the **exact UI label string** so the override lookup hits. `\ugButton{Save Section}` not `\ugButton{Save}`. If the actual UI label is awkward (e.g. `SRS Challenge Count`), use it as-is — the inline screenshot is the user's anchor; matching prose can describe it more naturally around the inline reference.
+**Inline UI element rule:** when referencing a button / field / menu item, use the exact UI label string so the override lookup hits. `\ugButton{Save Section}` not `\ugButton{Save}`. If the actual UI label is awkward (e.g. `SRS Challenge Count`), use it as-is — the inline screenshot is the user's anchor; matching prose can describe it more naturally around the inline reference.
 
 **Template command reference:**
 
