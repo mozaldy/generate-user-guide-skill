@@ -253,7 +253,8 @@ Rules:
    - Crop the smallest useful live container instead of using a full-page capture. If only the sidebar is needed, capture only the sidebar element. If only one chart/table card is needed, capture only that card.
    - Avoid one huge full-page capture if it will make the document tall, cramped, or hard to read.
    - If a page has multiple visible containers, capture each important container separately and let the PDF explain them in sequence.
-   - Do not add red annotation boxes to the final screenshots unless the user explicitly asks for annotated UI review images.
+   - Do not use annotated browser-vision screenshots in the final document. Red boxes and numbered callouts are for internal analysis only.
+   - If browser-vision was used with annotations, recapture the same state cleanly with `annotate: false` or with a browser/Playwright screenshot before saving the file.
    - For modal flows: click trigger → wait 500ms → screenshot → `Escape`.
    - For forms with type variants: open modal, select each type, screenshot each separately.
    - Save to `docs/screenshots/NN-descriptive-name.png` (zero-padded).
