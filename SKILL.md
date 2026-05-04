@@ -27,7 +27,7 @@ Optional:
 
 Template rule:
 - If the user gives `TEMPLATE_SOURCE`, use it.
-- If the user does not answer about the template, use the bundled fallback template at `/home/ubuntu/generate-user-guide-skill/template`.
+- If the user does not answer about the template, use the bundled fallback template at `/generate-user-guide-skill/template`.
 - If the user asks where the template is stored and gives no other location, answer with the fallback path and proceed with that source.
 
 Derive `APP_SLUG` by lowercasing and hyphenating `APP_NAME` (for example, `Adibasa` → `adibasa`).
@@ -49,7 +49,7 @@ Copy-ready intake prompt:
 Default fallback template for this skill repo:
 
 ```text
-/home/ubuntu/generate-user-guide-skill/template/
+/generate-user-guide-skill/template/
 ```
 
 Supported template sources:
@@ -106,7 +106,7 @@ Do not patch `userguide.sty` for tectonic compatibility during each project. Kee
 Before doing anything else, determine which template source to use:
 1. If the user provided a template path, use that.
 2. If the user provided a ZIP/archive, unpack it and use the unpacked template folder.
-3. If the user did not answer about the template, use the repo fallback template at `/home/ubuntu/generate-user-guide-skill/template`.
+3. If the user did not answer about the template, use the repo fallback template at `/generate-user-guide-skill/template`.
 
 If the template source is ambiguous, ask for one of these:
 - path to the template folder
@@ -158,7 +158,7 @@ brew install tectonic
 Use the chosen template source, but keep the repo fallback as the default if the user did not provide a different one.
 
 ```bash
-TEMPLATE_ROOT="${TEMPLATE_SOURCE:-/home/ubuntu/generate-user-guide-skill/template}"
+TEMPLATE_ROOT="${TEMPLATE_SOURCE:-/generate-user-guide-skill/template}"
 
 mkdir -p docs/screenshots
 mkdir -p docs/sections
