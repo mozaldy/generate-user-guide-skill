@@ -264,11 +264,11 @@ ls docs/screenshots/
 
 ### Step 6 — Capture inline UI element screenshots
 
-For every `\ugButton{X}`, `\ugField{Y}`, `\ugMenu{Z}` planned for the section files, capture the element itself with Playwright `element.screenshot()`. These render inline in the PDF as small images instead of styled text.
+For every `\ugButton{X}`, `\ugField{Y}`, `\ugMenu{Z}` planned for the section files, capture the element itself with Playwright `element.screenshot()`. The final PDF should show the UI control as a screenshot image, not as styled text.
 
 Prefer tight crops or component-only shots for inline UI references; do not capture a full page just to extract a single label.
 
-Build a list of every label that will be referenced. Group by type (button / field / menu).
+Build a list of every label that will be referenced. Group by type (button / field / menu). Every planned label must have a matching screenshot image before you write the section files.
 
 Write `scripts/capture-ui-elements.mjs`:
 
@@ -300,7 +300,7 @@ async function saveMenu(page, label) {
 
 **Important:** the `\ugField{Foo}` lookup uses the exact label string from the source code (e.g. `<FormLabel>Foo</FormLabel>`) — not a paraphrased / user-friendly version. Capture using the same string. If the UI label is `SRS Challenge Count`, the section text should write `\ugField{SRS Challenge Count}`, not `\ugField{Review Count}`.
 
-For dynamic-text buttons (e.g. `Upload N Image(s)` where N changes), capture only if the label is stable enough to match in the UI. Otherwise let them fall back to styled text.
+For dynamic-text buttons (e.g. `Upload N Image(s)` where N changes), do not capture them as text labels. Either capture the exact rendered state you need or omit the reference from the guide.
 
 ---
 
@@ -348,7 +348,7 @@ Output structure of `docs/ui-overrides.tex`:
 
 The `\ugElemImg*` macros and `\ug*Orig` originals are pre-defined in the .sty. Don't redefine them — just use them.
 
-Labels with no captured PNG fall through to the `Orig` macro (styled text). This is intentional fallback for dynamic-text labels.
+Every label that appears in the guide must have a captured PNG. If a label does not have a screenshot, capture it before writing the section text. Do not rely on styled-text fallback for the final document.
 
 ---
 
