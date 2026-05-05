@@ -199,8 +199,8 @@ The LaTeX support files are already in the template. Do not rewrite them for tec
 
 ### Step 4 — App theming (logo + colors)
 
-**4a. Logo.** The logo MUST come from the target app's real brand. Search in this priority order:
-1. The live deployment — open `BASE_URL` in Playwright/browser, find the brand logo on the public landing page or login page (often a top-left `<img>` with `alt` containing the app or company name). Save the rendered logo via `element.screenshot()` or download the source `src` attribute.
+**4a. Logo (MANDATORY — do not skip, do not proceed to Step 4b until complete).** The logo MUST come from the target app's real brand. A pre-compile gate in Step 9 will reject any build where the logo was not extracted. Search in this priority order:
+1. The live deployment — open `BASE_URL` in browser, find the brand logo on the public landing page or login page (top-left `<img>` with `alt` containing the app or company name). Download the actual image file via its `src` URL, or take an `element.screenshot()` of the `<img>` element. **Do not screenshot the whole page** — capture only the logo element.
 2. The repo's static assets:
    ```bash
    ls public/icon.svg public/logo.svg public/*.svg public/logo.* 2>/dev/null
@@ -208,15 +208,22 @@ The LaTeX support files are already in the template. Do not rewrite them for tec
    ```
 3. Only if 1 and 2 fail, ask the user for a logo file.
 
-Convert SVG → PNG (macOS native, no extra deps):
+Convert SVG → PNG if needed:
 ```bash
-sips -s format png public/icon.svg --out docs/logo.png
-# Or for high-res: render at larger dimensions first
+# Linux (rsvg-convert, usually available)
+rsvg-convert -w 300 public/icon.svg -o docs/img/original-logo.png
+# macOS native
+sips -s format png public/icon.svg --out docs/img/original-logo.png
 ```
 
-Make sure `docs/logo.png` is the **target app's logo**, not the bundled template's example logo. Overwrite `docs/img/original-logo.png` and `docs/img/white-logo.png` if the template uses them on the cover.
+**After saving the logo file**, create a sentinel that proves extraction happened:
+```bash
+echo "extracted from: <SOURCE_URL_OR_PATH>" > docs/.logo-verified
+```
 
-In `docs/sections/00-metadata.tex`, set `\ugLogo{logo}` (no extension; LaTeX adds it). Also set `\ugCompany`, `\ugAppName`, `\ugAppSubtitle`, `\ugVersion`, `\ugReleaseDate`, and any other metadata commands the template exposes.
+Replace both `docs/img/original-logo.png` and `docs/img/white-logo.png` with the target app's logo. For `white-logo.png`, use a white/light version of the logo if available; otherwise copy the same file.
+
+In `docs/sections/00-metadata.tex`, set `\ugLogo{img/original-logo}` (no extension). Also set `\ugCompany`, `\ugAppName`, `\ugAppSubtitle`, `\ugVersion`, `\ugReleaseDate`, and any other metadata commands the template exposes.
 
 **4b. Colors (MANDATORY — do not skip, do not proceed to Step 5 until complete).** Extract the target app's brand colors and generate a customized `userguide-colors.sty` for that app. A pre-compile gate in Step 9 will reject any PDF build that still contains the bundled purple template colors.
 
@@ -503,16 +510,24 @@ Replace each skeleton in `docs/sections/` with project-specific content. Use the
 **BLOCKING PRE-COMPILE CHECK — run this before xelatex/tectonic. Do NOT skip.**
 
 ```bash
-# Fail fast if colors were never extracted (still using bundled purple template)
+# Gate 1: logo must have been extracted (sentinel file created in Step 4a)
+if [ ! -f docs/.logo-verified ]; then
+  echo "ERROR: docs/.logo-verified not found."
+  echo "Go back to Step 4a: extract the target app's logo from the live web, save to docs/img/original-logo.png, then create docs/.logo-verified."
+  exit 1
+fi
+echo "OK: logo extracted ($(cat docs/.logo-verified))"
+
+# Gate 2: colors must have been extracted (bundled purple template not present)
 if grep -q "4A148C\|Purple Theme\|ugPrimary.*Deep purple" docs/userguide-colors.sty 2>/dev/null; then
   echo "ERROR: userguide-colors.sty still contains bundled template colors (purple #4A148C)."
   echo "Go back to Step 4b: extract the target app's brand colors from the live web and rewrite docs/userguide-colors.sty before compiling."
   exit 1
 fi
-echo "OK: color file has been customized. Proceeding to compile."
+echo "OK: colors customized."
 ```
 
-If the check fails: stop, open the target app in a browser, sample the primary brand color, complete Step 4b, then re-run this check before compiling.
+If either check fails: stop, complete the failing step, re-run both checks, then compile.
 
 ```bash
 cd docs && tectonic user-guide-<APP_SLUG>.tex
@@ -538,7 +553,8 @@ Common errors and fixes:
 
 Before declaring success, open the compiled PDF (or grep the section files) and verify all of the following:
 
-- [ ] The cover logo is the **target app's brand**, not the bundled template's example logo.
+- [ ] `docs/.logo-verified` exists and contains a real source URL or file path (not the template default).
+- [ ] The cover logo is the **target app's brand**, not the bundled template's example logo. Open the PDF cover and compare the logo visually against the live web app's top-left logo.
 - [ ] All colors match the target app's actual web colors (primary, secondary, accent), not the bundled purple template. Check: cover gradient, chapter headers, table headers, button styles, sidebar backgrounds, link colors, and callout boxes. Every color element should reference the app's brand, not the template's default.
 - [ ] The TOC lists section 6 as multiple `06-XX` sub-modules — **one chapter per feature module, never collapsed**.
 - [ ] Total chapter count in TOC ≥ 12 (Doc Control + Intro + System + Getting Started + UI + at least one feature module + Common Tasks + Troubleshooting + FAQ + Best Practices + Glossary + Appendix).
