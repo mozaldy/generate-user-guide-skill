@@ -312,6 +312,15 @@ Crop helper pattern:
 - If a container is partially off-screen, scroll it into view before capturing it.
 - Avoid capturing horizontal slivers that cut content (e.g. half a username, half a number). If the natural element bounding box truncates content, expand `clip` to include the full visible row/column.
 
+**PDF width parameters (non-negotiable — these control how large a screenshot renders in the final PDF):**
+- Standard container screenshot (card, table, form, modal): `\ugScreenshot{path}{0.85}`
+- Sidebar / narrow panel crop: `\ugScreenshot{path}{0.5}`
+- Full-width only for genuine full-width UI (e.g. a header bar that spans 100% of the page): `\ugScreenshot{path}{0.95}` — this is the absolute maximum
+- **NEVER pass `1.0` or omit the width parameter** — it causes the image to bleed outside the text block
+- **NEVER drop a raw `\includegraphics[width=\textwidth]` for a page screenshot** — wrap with `\ugScreenshot` and the correct fraction
+- If a chapter has an "overview" screenshot (e.g. Chapter 4 UI Overview), it must still follow the container-first rule and use ≤ 0.85 width — there is no "overview exception"
+- Garbled text in the compiled PDF (e.g. `FSdbXXX dklk SfikSlkk`) almost always means a `\ugScreenshot` path points to a PNG that does not exist. If you see garbled text: check the path, verify the file exists in `docs/screenshots/` or `docs/ui/`, fix the path or recapture, then recompile.
+
 Selectors:
 - Buttons: `page.getByRole('button', { name: /text/i }).first()`
 - Form inputs: `page.getByRole('textbox', { name: /label/i })`
@@ -525,9 +534,33 @@ if grep -q "4A148C\|Purple Theme\|ugPrimary.*Deep purple" docs/userguide-colors.
   exit 1
 fi
 echo "OK: colors customized."
+
+# Gate 3: all PNG files referenced in section .tex files must exist
+MISSING=0
+for TEX_FILE in docs/sections/*.tex; do
+  while IFS= read -r match; do
+    PNG_PATH="docs/${match}"
+    if [ ! -f "$PNG_PATH" ]; then
+      echo "ERROR: missing image: $PNG_PATH (referenced in $TEX_FILE)"
+      MISSING=$((MISSING + 1))
+    fi
+  done < <(grep -oP '(?<=\\ugScreenshot\{)[^}]+' "$TEX_FILE" 2>/dev/null)
+  while IFS= read -r match; do
+    PNG_PATH="docs/${match}"
+    if [ ! -f "$PNG_PATH" ]; then
+      echo "ERROR: missing image: $PNG_PATH (referenced in $TEX_FILE)"
+      MISSING=$((MISSING + 1))
+    fi
+  done < <(grep -oP '(?<=\\includegraphics(\[[^\]]*\])?\{)[^}]+' "$TEX_FILE" 2>/dev/null)
+done
+if [ "$MISSING" -gt 0 ]; then
+  echo "ERROR: $MISSING missing PNG file(s). Fix paths or recapture before compiling. Missing images produce garbled text in the PDF."
+  exit 1
+fi
+echo "OK: all referenced images exist."
 ```
 
-If either check fails: stop, complete the failing step, re-run both checks, then compile.
+If any check fails: stop, complete the failing step, re-run all checks, then compile.
 
 ```bash
 cd docs && tectonic user-guide-<APP_SLUG>.tex
@@ -565,7 +598,9 @@ Before declaring success, open the compiled PDF (or grep the section files) and 
 - [ ] FAQ has ≥5 real `\ugFAQ` entries with multi-sentence answers.
 - [ ] Glossary has a definition body for every entry.
 - [ ] Best Practices uses `\begin{ugBestPractice}[Title]` with the title in brackets.
-- [ ] Sidebar screenshots are narrow centered crops, not full-page dashboards.
+- [ ] Sidebar screenshots are narrow centered crops (`\ugScreenshot{...}{0.5}`), not full-page dashboards.
+- [ ] No screenshot uses width > 0.95 (never `1.0` or `\textwidth` directly). Check every `\ugScreenshot` call and every `\includegraphics` in section files.
+- [ ] No garbled text (e.g. `FSdb...` letter-scramble) visible in any page. If found: the `\ugScreenshot` path at that location points to a PNG that does not exist — fix the path or recapture, then recompile.
 - [ ] Each dashboard container is captured separately and explained with Purpose / What it means / Step-by-step / Expected result, not a generic "this card shows data" sentence.
 - [ ] Every inline `\ugButton`, `\ugField`, `\ugMenu` uses the exact UI label string from the source code.
 
