@@ -218,7 +218,7 @@ Make sure `docs/logo.png` is the **target app's logo**, not the bundled template
 
 In `docs/sections/00-metadata.tex`, set `\ugLogo{logo}` (no extension; LaTeX adds it). Also set `\ugCompany`, `\ugAppName`, `\ugAppSubtitle`, `\ugVersion`, `\ugReleaseDate`, and any other metadata commands the template exposes.
 
-**4b. Colors.** Extract the target app's brand colors and generate a customized `userguide-colors.sty` for that app.
+**4b. Colors (MANDATORY — do not skip, do not proceed to Step 5 until complete).** Extract the target app's brand colors and generate a customized `userguide-colors.sty` for that app. A pre-compile gate in Step 9 will reject any PDF build that still contains the bundled purple template colors.
 
 **Extract colors from the target app:**
 - `app/globals.css` (Next.js / shadcn)
@@ -499,6 +499,20 @@ Replace each skeleton in `docs/sections/` with project-specific content. Use the
 ---
 
 ### Step 9 — Compile PDF
+
+**BLOCKING PRE-COMPILE CHECK — run this before xelatex/tectonic. Do NOT skip.**
+
+```bash
+# Fail fast if colors were never extracted (still using bundled purple template)
+if grep -q "4A148C\|Purple Theme\|ugPrimary.*Deep purple" docs/userguide-colors.sty 2>/dev/null; then
+  echo "ERROR: userguide-colors.sty still contains bundled template colors (purple #4A148C)."
+  echo "Go back to Step 4b: extract the target app's brand colors from the live web and rewrite docs/userguide-colors.sty before compiling."
+  exit 1
+fi
+echo "OK: color file has been customized. Proceeding to compile."
+```
+
+If the check fails: stop, open the target app in a browser, sample the primary brand color, complete Step 4b, then re-run this check before compiling.
 
 ```bash
 cd docs && tectonic user-guide-<APP_SLUG>.tex
