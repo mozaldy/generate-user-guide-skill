@@ -218,13 +218,16 @@ Make sure `docs/logo.png` is the **target app's logo**, not the bundled template
 
 In `docs/sections/00-metadata.tex`, set `\ugLogo{logo}` (no extension; LaTeX adds it). Also set `\ugCompany`, `\ugAppName`, `\ugAppSubtitle`, `\ugVersion`, `\ugReleaseDate`, and any other metadata commands the template exposes.
 
-**4b. Colors.** Read the target app's brand colors. Locations to try:
+**4b. Colors.** Extract the target app's brand colors and generate a customized `userguide-colors.sty` for that app.
+
+**Extract colors from the target app:**
 - `app/globals.css` (Next.js / shadcn)
 - `app/styles/globals.css`
 - `tailwind.config.{js,ts}`
 - `src/index.css`
+- Live web deployment: open in browser, use DevTools color picker to sample buttons, headers, links
 
-Look for `--primary`, `--secondary`, `--accent`, `--background`, `--border`. Values may be `oklch(...)`, `hsl(...)`, or hex.
+Look for `--primary`, `--secondary`, `--accent`, `--background`, `--border`. Values may be `oklch(...)`, `hsl(...)`, rgb, or hex.
 
 Convert to hex via inline Node.js. Example for oklch:
 
@@ -236,20 +239,36 @@ console.log('primary:', toHex('oklch(0.65 0.12 110)'));
 "
 ```
 
-If `culori` is not installed: `npm install --no-save culori`. Or hand-roll a converter (the OKLCh→sRGB math is short).
+If `culori` is not installed: `npm install --no-save culori`. Or hand-roll a converter (OKLCh→sRGB math is <20 lines).
 
-Patch `docs/userguide-colors.sty` (or the color block in `userguide.sty`, depending on the template version) — overwrite these variables with the target app's brand colors:
-- `ugPrimary` ← main brand color from the web app
-- `ugPrimaryDark` ← darker shade of the same brand color
-- `ugSecondary` ← secondary brand or accent color
-- `ugLightBg` ← light tint of the primary color
-- `ugTableHead` ← same as `ugPrimary` or slightly darker
-- `ugCoverGradA` / `ugCoverGradB` ← primary / primary-dark
-- `ugBorder` ← border tint that matches the app
+**Generate a NEW `userguide-colors.sty` for the target app** (do NOT use the bundled purple theme template):
 
-Keep body text neutral:
-- `ugDarkText` remains near-black
-- `ugMutedText` remains neutral gray
+1. Copy the template's `template/latex/userguide-colors.sty` as a reference.
+2. Override EVERY color variable with the target app's actual brand colors:
+   - `ugPrimary` ← main brand color
+   - `ugPrimaryDark` ← darker shade (darken primary by 15–25%)
+   - `ugSecondary` ← secondary brand or accent color
+   - `ugAccent` ← highlight color (often matches secondary)
+   - `ugLightBg` ← light tint of primary (lighten by 85–90%)
+   - `ugTableHead` ← same as `ugPrimary`
+   - `ugCoverGradA` / `ugCoverGradB` ← primary / primary-dark
+   - `ugBorder` ← border tint (light tint of primary, or neutral gray)
+   - `ugSuccess` ← green for OK/positive states
+   - `ugDanger` ← red for error/destructive states
+   - `ugWarning` ← amber/orange for warnings
+   - `ugInfo` ← blue for informational messages
+   - `ugCodeBg` ← very light tint for code blocks (should contrast with text)
+
+3. Keep body text and muted text neutral (do NOT use the app's primary color for body):
+   - `ugDarkText` ← near-black (#1A1A2E or app's actual text color)
+   - `ugMutedText` ← neutral gray (#6B7B8D or app's muted gray)
+
+4. Save the customized file to `docs/userguide-colors.sty` in the working directory.
+5. When building the PDF, `toctonic` will load `docs/userguide-colors.sty` instead of the template version.
+
+**Validate:** The final PDF cover, chapter headers, table headers, buttons, and links should all use the target app's actual brand colors. If the PDF still shows purple or any color from the bundled template, colors were not properly extracted or patched.
+
+**Important page-layout rule:** do not let document control spill into the rest of the guide. The document control section should stand alone, then the next section begins on a new page.
 
 **Important page-layout rule:** do not let document control spill into the rest of the guide. The document control section should stand alone, then the next section begins on a new page.
 
@@ -506,7 +525,7 @@ Common errors and fixes:
 Before declaring success, open the compiled PDF (or grep the section files) and verify all of the following:
 
 - [ ] The cover logo is the **target app's brand**, not the bundled template's example logo.
-- [ ] The cover colors match the target app's primary brand color, not the example template's purple.
+- [ ] All colors match the target app's actual web colors (primary, secondary, accent), not the bundled purple template. Check: cover gradient, chapter headers, table headers, button styles, sidebar backgrounds, link colors, and callout boxes. Every color element should reference the app's brand, not the template's default.
 - [ ] The TOC lists section 6 as multiple `06-XX` sub-modules — **one chapter per feature module, never collapsed**.
 - [ ] Total chapter count in TOC ≥ 12 (Doc Control + Intro + System + Getting Started + UI + at least one feature module + Common Tasks + Troubleshooting + FAQ + Best Practices + Glossary + Appendix).
 - [ ] Every feature-module `.tex` file (chapters 5+) ends with a **Business Rules** subsection.
