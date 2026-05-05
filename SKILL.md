@@ -68,30 +68,33 @@ Canonical template contents to mirror:
 - `latex/userguide-tables.sty`
 - `latex/userguide-titlepage.sty`
 - `latex/userguide-typography.sty`
-- `sections/00-metadata.tex`
-- `sections/01-document-control.tex`
-- `sections/02-introduction.tex`
-- `sections/03-system-overview.tex`
-- `sections/04-getting-started.tex`
-- `sections/05-ui-overview.tex`
-- `sections/06-core-features.tex`
-- `sections/07-common-tasks.tex`
-- `sections/08-troubleshooting.tex`
-- `sections/09-faq.tex`
-- `sections/10-best-practices.tex`
-- `sections/11-glossary.tex`
-- `sections/12-appendix.tex`
+- `sections/00-metadata.tex` (config: app name, company, version, logo, cover)
+- `sections/00-document-control.tex` (unnumbered preamble, rendered before TOC)
+- `sections/01-introduction.tex` (chapter 1)
+- `sections/02-system-overview.tex` (chapter 2)
+- `sections/03-getting-started.tex` (chapter 3)
+- `sections/04-ui-overview.tex` (chapter 4)
+- `sections/05-<feature>.tex` … `NN-<feature>.tex` — one file per major feature/module of the target app, numbered sequentially starting at 5 (mandatory split — see below). The bundled reference uses chapters 5–16 for 12 modules.
+- `sections/<N+1>-common-tasks.tex` (after the last feature module)
+- `sections/<N+2>-troubleshooting.tex`
+- `sections/<N+3>-faq.tex`
+- `sections/<N+4>-best-practices.tex`
+- `sections/<N+5>-glossary.tex`
+- `sections/<N+6>-appendix.tex`
+
+For the bundled 12-module reference: `17-common-tasks.tex` … `22-appendix.tex`.
 - `img/` — logo and cover assets
 - `Makefile`, `build.ps1`, `build.bat` — wrappers if present in the template
 
-
 Important template conventions:
-- all section files use `«...»` placeholder syntax and every placeholder must be replaced
-- `06-core-features.tex` is the most important section and should be expanded for every major feature module
-- every user-facing step should include a screenshot reference or `\ugScreenshotPlaceholder`
-- button and icon references should use the template's inline commands such as `\ugButton{...}`, `\ugButtonIcon{...}`, `\ugIconRef{...}` when available
-- inline UI labels must be rendered from browser/Playwright-captured screenshots, not synthetic drawings, text styling, or hand-made approximations
-- the template's structure and section order are the source of truth; do not invent a different hierarchy unless the user explicitly asks for one
+- The bundled template is the **source of truth**. It compiles to a 22-chapter reference PDF (`userguide-template/userguide-template/build/userguide-example.pdf`) — Document Control + 22 numbered chapters: Introduction (1), System Overview (2), Getting Started (3), UI Overview (4), then 12 per-feature module chapters (5–16), Common Tasks (17), Troubleshooting (18), FAQ (19), Best Practices (20), Glossary (21), Appendix (22). Use this PDF as the **depth and structure target**.
+- All section files ship with real Insight Doc content. When generating a guide for a different app, **rewrite every section file end-to-end** with the target app's content — keep the same chapter ordering, same subsection breakdown, same `\begin{ugModule}{Overview}` / `\begin{ugTask}` / `\begin{ugFAQ}` / `\begin{ugBestPractice}[Title]` / `tabularx` patterns, and the same depth as the reference. **Never ship a section with a bare stub, an empty table, or a single-line "TBD" body.**
+- The feature-module cluster (chapters 5 … N) is the source of truth for feature coverage. Mirror the target app's real module list into separate `NN-<feature>.tex` files starting at `05-` and list each one in `userguide-example.tex`. **One file per feature module is mandatory** — never collapse multiple features into a single chapter. Minimum is one feature module file (chapter 5); the bundled example uses 12 (chapters 5–16: `05-document-management.tex` through `16-lifecycle-management.tex`).
+- After the last feature chapter, the trailing chapters continue sequentially: Common Tasks, Troubleshooting, FAQ, Best Practices, Glossary, Appendix. For the 12-module reference these end up as chapters 17–22.
+- Every user-facing step should include a screenshot reference or `\ugScreenshotPlaceholder`.
+- Button, field, and menu references must use the template's inline commands: `\ugButton{...}`, `\ugField{...}`, `\ugMenu{...}`, `\ugKey{...}`, `\ugRole{...}`, `\ugStatus{<colorMacro>}{Label}`.
+- Inline UI labels must be rendered from browser/Playwright-captured screenshots, not synthetic drawings, text styling, or hand-made approximations.
+- The template's structure and section order are the source of truth; do not invent a different hierarchy unless the user explicitly asks for one.
 
 The bundled `userguide.sty` should already include tectonic-safe adjustments, such as:
 - Unicode stubs instead of FontAwesome5 OTF loads
@@ -100,10 +103,10 @@ The bundled `userguide.sty` should already include tectonic-safe adjustments, su
 - `\InputIfFileExists{ui-overrides.tex}{}{}` for project-specific overrides
 
 If the user supplies a ZIP template, normalize it into the skill workspace shape rather than inventing a new file hierarchy. The conversion rule is:
-- keep the ZIP’s section ordering and placeholder content as the source of truth
+- keep the ZIP's section ordering and placeholder content as the source of truth
 - mirror it into the skill workspace under the expected Hermes layout
-- preserve the repo’s LaTeX semantics, but adapt file placement so the skill can operate consistently
-- if the user asks for a different structure, change only the final PDF’s section organization, not the underlying template source format
+- preserve the repo's LaTeX semantics, but adapt file placement so the skill can operate consistently
+- if the user asks for a different structure, change only the final PDF's section organization, not the underlying template source format
 
 Do not patch `userguide.sty` for tectonic compatibility during each project. Keep the template stable and override only project-specific values.
 
@@ -134,8 +137,9 @@ Return:
 - forms that change fields based on a type/category selection — list each variant separately
 - any domain-specific terms worth defining in a glossary
 - anything that commonly confuses new users (for FAQ + troubleshooting)
+- the full **module list** of the target app — group routes/pages into named feature modules. This list drives the chapter-5+ feature-file split.
 
-Produce a numbered list of user flows before proceeding.
+Produce a numbered list of user flows AND a numbered list of feature modules before proceeding.
 
 ---
 
@@ -180,19 +184,29 @@ cp "$TEMPLATE_ROOT/sections/"*.tex    docs/sections/
 cp -R "$TEMPLATE_ROOT/img"             docs/
 ```
 
+After copy:
+- Open `docs/user-guide-<APP_SLUG>.tex` and update the `\input{sections/...}` list so it matches the **module list discovered in Step 1**, not the template's example modules. Remove module file inputs that don't apply, add new ones for modules the example template doesn't cover, and **renumber the trailing chapters (Common Tasks through Appendix) so they continue sequentially after the last feature module**.
+- For each new module file, copy one of the existing Insight Doc modules (e.g. `06-versioning.tex` is a good short skeleton — 78 lines, 4 subsections; `05-document-management.tex` is a good long skeleton — 632 lines) and rewrite it for the target app.
+- Rename the trailing files to keep numbering contiguous. Examples:
+  - 1 feature module → `05-<feature>.tex`, then `06-common-tasks.tex` … `11-appendix.tex` (11 numbered chapters total).
+  - 5 feature modules → chapters 5–9, then `10-common-tasks.tex` … `15-appendix.tex` (15 numbered chapters total).
+  - 12 feature modules (bundled reference) → chapters 5–16, then `17-common-tasks.tex` … `22-appendix.tex` (22 numbered chapters total).
+- The final TOC must have at minimum: Document Control (unnumbered) + Introduction + System Overview + Getting Started + UI Overview + (≥1 feature chapter) + Common Tasks + Troubleshooting + FAQ + Best Practices + Glossary + Appendix.
+
 The LaTeX support files are already in the template. Do not rewrite them for tectonic compatibility — use the template as-is and override only project-specific values.
 
 ---
 
 ### Step 4 — App theming (logo + colors)
 
-**4a. Logo.** Find the app logo:
-
-```bash
-# Common locations
-ls public/icon.svg public/logo.svg public/*.svg 2>/dev/null
-ls app/icon.* app/icon-*.* 2>/dev/null
-```
+**4a. Logo.** The logo MUST come from the target app's real brand. Search in this priority order:
+1. The live deployment — open `BASE_URL` in Playwright/browser, find the brand logo on the public landing page or login page (often a top-left `<img>` with `alt` containing the app or company name). Save the rendered logo via `element.screenshot()` or download the source `src` attribute.
+2. The repo's static assets:
+   ```bash
+   ls public/icon.svg public/logo.svg public/*.svg public/logo.* 2>/dev/null
+   ls app/icon.* app/icon-*.* src/assets/logo* 2>/dev/null
+   ```
+3. Only if 1 and 2 fail, ask the user for a logo file.
 
 Convert SVG → PNG (macOS native, no extra deps):
 ```bash
@@ -200,9 +214,11 @@ sips -s format png public/icon.svg --out docs/logo.png
 # Or for high-res: render at larger dimensions first
 ```
 
-In `docs/sections/00-metadata.tex`, set `\ugLogo{logo}` (no extension; LaTeX adds it).
+Make sure `docs/logo.png` is the **target app's logo**, not the bundled template's example logo. Overwrite `docs/img/original-logo.png` and `docs/img/white-logo.png` if the template uses them on the cover.
 
-**4b. Colors.** Read the app's CSS variables. Locations to try:
+In `docs/sections/00-metadata.tex`, set `\ugLogo{logo}` (no extension; LaTeX adds it). Also set `\ugCompany`, `\ugAppName`, `\ugAppSubtitle`, `\ugVersion`, `\ugReleaseDate`, and any other metadata commands the template exposes.
+
+**4b. Colors.** Read the target app's brand colors. Locations to try:
 - `app/globals.css` (Next.js / shadcn)
 - `app/styles/globals.css`
 - `tailwind.config.{js,ts}`
@@ -222,7 +238,7 @@ console.log('primary:', toHex('oklch(0.65 0.12 110)'));
 
 If `culori` is not installed: `npm install --no-save culori`. Or hand-roll a converter (the OKLCh→sRGB math is short).
 
-Patch `docs/userguide.sty` color block — overwrite these variables with the target app's brand colors:
+Patch `docs/userguide-colors.sty` (or the color block in `userguide.sty`, depending on the template version) — overwrite these variables with the target app's brand colors:
 - `ugPrimary` ← main brand color from the web app
 - `ugPrimaryDark` ← darker shade of the same brand color
 - `ugSecondary` ← secondary brand or accent color
@@ -249,10 +265,10 @@ Rules:
 3. For each user flow:
    - Navigate to the URL (use real IDs from live data — click through to discover them)
    - `await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {})`
-   - Prefer container-sized captures: one card, one table, one sidebar block, one modal, or one form section per screenshot.
-   - Crop the smallest useful live container instead of using a full-page capture. If only the sidebar is needed, capture only the sidebar element. If only one chart/table card is needed, capture only that card.
-   - Avoid one huge full-page capture if it will make the document tall, cramped, or hard to read.
-   - If a page has multiple visible containers, capture each important container separately and let the PDF explain them in sequence.
+   - **Container-first capture rule (non-negotiable):** capture one container per screenshot — one card, one table, one sidebar block, one modal, or one form section. Never capture a full page just to show a single container.
+   - For the sidebar specifically: capture only the sidebar element, not the whole dashboard. The crop should show the sidebar block plus enough header/search/menu context to read it clearly. Center it narrowly in the page.
+   - Crop the smallest useful live container. If only one chart/table card is needed, capture only that card.
+   - If a page has multiple visible containers (e.g. a dashboard with summary cards, charts, and tables), capture each important container separately and let the PDF explain them in sequence.
    - Do not use annotated browser-vision screenshots in the final document. Red boxes and numbered callouts are for internal analysis only.
    - If browser-vision was used with annotations, recapture the same state cleanly with `annotate: false` or with a browser/Playwright screenshot before saving the file.
    - For modal flows: click trigger → wait 500ms → screenshot → `Escape`.
@@ -266,8 +282,9 @@ Crop helper pattern:
 - Prefer `locator.screenshot()` for a single container, button, card, sidebar, or table.
 - If you need extra padding around a container, use `locator.boundingBox()` and `page.screenshot({ clip })`.
 - Clip a little wider/taller than the element if the screenshot needs context, but keep the crop focused on the required container.
-- For dashboards, capture distinct regions separately: sidebar, top bar, summary cards, chart cards, and table cards.
+- For dashboards, capture distinct regions separately: sidebar, top bar, summary cards, chart cards, and table cards — each as its own file.
 - If a container is partially off-screen, scroll it into view before capturing it.
+- Avoid capturing horizontal slivers that cut content (e.g. half a username, half a number). If the natural element bounding box truncates content, expand `clip` to include the full visible row/column.
 
 Selectors:
 - Buttons: `page.getByRole('button', { name: /text/i }).first()`
@@ -378,9 +395,13 @@ Only map labels that have real browser-captured PNGs. If a label has no captured
 
 Replace each skeleton in `docs/sections/` with project-specific content. Use the template's own section-by-section structure as the guide, especially where the template already breaks a section into deeper subtopics.
 
+**No-stub rule (non-negotiable):** every section file must ship with real, project-specific content. Do not output a section that contains only a heading, an empty table header, a bullet list of bare terms, or a placeholder note. The previous run of this skill failed because Troubleshooting shipped an empty `ugErrorTable` header, Glossary shipped term names without definitions, and Common Tasks were collapsed to one-line steps. Every section must look as substantive as the corresponding section in the bundled example template.
+
 **Layout rules (non-negotiable):**
 - Document control should be a single page, followed by a new page for the rest of the guide.
 - Keep the same broad chapter order as the template.
+- The TOC of the final PDF must mirror the chosen `userguide-example.tex` `\input{}` order. Do not let any section silently drop because its file is empty.
+- For chapters 5+, list one chapter entry per major feature module of the target app, numbered sequentially. **Never collapse multiple modules into a generic single chapter** — even a small app with 2–3 features must split each into its own `NN-<feature>.tex` file. The reference PDF demonstrates this pattern with 12 separate feature chapters (5: Document Management, 6: Versioning, 7: Approval Workflow, 8: Document Preview, 9: Secure Download, 10: Share Links, 11: Access Control, 12: Audit & Analytics, 13: Dashboard Analytics, 14: AI Intelligence, 15: Master Data, 16: Lifecycle Management).
 - If a chapter has multiple major subsections, keep the chapter title at the top of its new page and let the subsections continue below it.
 - Preserve the template's deeper subdivision pattern when the content naturally fits it.
 
@@ -393,6 +414,7 @@ Replace each skeleton in `docs/sections/` with project-specific content. Use the
 - Second person ("you", "your") throughout
 - Short sentences, active voice
 - Field descriptions: say what user should type, not what system stores
+- Container descriptions must answer **what the user sees, what it means, and what to do with it** — never a generic "this card shows data" sentence. Borrow the example template's pattern: Purpose → What the code/UI does → What it means → Step-by-step usage → Expected result.
 
 **Inline UI element rule:** when referencing a button / field / menu item, use the exact UI label string so the override lookup hits. `\ugButton{Save Section}` not `\ugButton{Save}`. If the actual UI label is awkward (e.g. `SRS Challenge Count`), use it as-is — the inline screenshot is the user's anchor; matching prose can describe it more naturally around the inline reference.
 
@@ -402,39 +424,58 @@ Replace each skeleton in `docs/sections/` with project-specific content. Use the
 |------|---------|
 | Screenshot | `\ugScreenshot[0.9]{screenshots/NN-name.png}{Plain caption}` |
 | Numbered steps | `\begin{ugSteps} \item ... \end{ugSteps}` |
-| Info box | `\begin{ugNote} ... \end{ugNote}` |
+| Info box | `\begin{ugNote}[Optional Title] ... \end{ugNote}` |
 | Tip | `\begin{ugTip} ... \end{ugTip}` |
 | Warning | `\begin{ugWarning} ... \end{ugWarning}` |
 | Button ref | `\ugButton{Save Section}` |
 | Field ref | `\ugField{Email}` |
-| Menu path | `\ugMenu{Courses}` |
+| Menu path | `\ugMenu{Documents > Document List}` |
 | Keyboard key | `\ugKey{Esc}` |
+| Role pill | `\ugRole{Admin}` |
+| Status pill | `\ugStatus{ugWarning}{Review}` |
 | Feature module | `\begin{ugModule}{Module Name} ... \end{ugModule}` |
 | Step-by-step task | `\begin{ugTask}{Task Title} ... \end{ugTask}` |
 | FAQ entry | `\ugFAQ{Question?}{Answer.}` |
-| Glossary entry | `\ugGlossaryEntry{Term}{Definition}` |
+| Glossary entry | `\ugGlossaryEntry{Term}{Definition.}` |
 | Error table | `\begin{ugErrorTable} \ugError{msg}{cause}{fix} \end{ugErrorTable}` |
-| Best practice | `\begin{ugBestPractice}{Title} ... \end{ugBestPractice}` |
+| Best practice | `\begin{ugBestPractice}[Title] ... \end{ugBestPractice}` |
 
 **Note on `\ugScreenshot`:** the width argument is just the multiplier (`0.9`, not `0.9\textwidth`). The macro multiplies internally. For step-by-step screenshots, use smaller crops when the step is about a single control or button, and use wider shots when the user needs to understand layout or context.
 
-**Section guidelines** — keep the template’s richer section-by-section shape:
+**Note on `\ugBestPractice`:** the title goes in **square brackets** as an optional argument: `\begin{ugBestPractice}[Use the correct role]`. Do not put the title inside the body or as a `{}` argument — that produces the broken "Use the correct role Always choose…" run-on layout.
 
-- `00-metadata.tex` — fill app name, subtitle, version, company, classification, tagline, logo, and cover image fields
-- `01-document-control.tex` — one revision row and a clean document-control layout
-- `02-introduction.tex` — purpose, problem statement, scope, intended audience, prerequisites, document conventions, how to use the guide, related documents
-- `03-system-overview.tex` — what the system does, functional capabilities, roles, and platform overview paragraphs or modules
-- `04-getting-started.tex` — sign-in sequence, role selection, and initial access steps with a screenshot for every visible state
-- `05-ui-overview.tex` — overall layout description, sidebar navigation, common UI elements, status badges, modals, grid operations, and other persistent interface regions
-  - for sidebar-focused sections, write a short explanatory sentence and place one centered, narrow live crop of the sidebar or menu container rather than a full-page dashboard screenshot
-  - if the sidebar is the subject, the crop should show only the sidebar block and enough header/search/menu context to read it clearly
-- `06-core-features.tex` and `06-0x-*.tex` — organize by feature/module; each module should include purpose, access, key functions, step-by-step usage, business rules, and expected result
-- `07-common-tasks.tex` — 3–5 `ugTask{}` blocks with a screenshot for every step, plus inline `\ugButton`/`\ugField`/`\ugMenu` references
-- `08-troubleshooting.tex` — `ugErrorTable` with common mistakes and fixes
-- `09-faq.tex` — `\ugFAQ` entries from non-obvious behaviour
-- `10-best-practices.tex` — `ugBestPractice` boxes for data entry, organisation, and security/access
-- `11-glossary.tex` — `\ugGlossaryEntry` per domain-specific term
-- `12-appendix.tex` — keyboard shortcuts and reference tables
+**Note on `\ugFAQ`:** both the question and the answer are required. Always include a real, multi-sentence answer. Do not ship `\ugFAQ{Question}{}`.
+
+**Note on `\ugGlossaryEntry`:** every entry needs a definition body. A bare term name is not a glossary entry — replace `\ugGlossaryEntry{SSO}{}` with `\ugGlossaryEntry{SSO}{Single Sign-On — a centralized login flow that lets one credential authenticate across multiple applications.}`.
+
+**Note on `\ugErrorTable`:** every Troubleshooting section must contain at least three real `\ugError{message}{cause}{fix}` rows scoped to the target app. An empty `ugErrorTable` with only a header row is not acceptable output.
+
+**Section guidelines** — keep the template's richer section-by-section shape:
+
+- `00-metadata.tex` — fill app name, subtitle, version, company, classification, tagline, logo, and cover image fields with the **target app's** values (not the example template's defaults).
+- `00-document-control.tex` — unnumbered preamble chapter (rendered before the TOC). One revision-history table and one approvals table. Single page only.
+- `01-introduction.tex` — purpose, problem statement, scope, intended audience, prerequisites, document conventions, how to use the guide, related documents, support channels. Multi-paragraph; not a stub.
+- `02-system-overview.tex` — what the system does, business objectives, key capabilities, system architecture, infrastructure components, user roles, security architecture, lifecycle, functional module map, data model, integration points, deployment model.
+- `03-getting-started.tex` — system requirements, accessing the application, first login, understanding your role, dashboard overview, language switch, logout/session, first-time navigation, browser tips. Use a `ugSteps` block when a flow has 4+ steps.
+- `04-ui-overview.tex` — main layout, sidebar navigation, common UI elements, status badges, modal dialogs, data grid operations, search syntax, keyboard shortcuts, accessibility.
+  - For the sidebar: write a short explanatory sentence and place one centered, narrow live crop of the sidebar or menu container. Never use a full-page dashboard screenshot to "show" the sidebar.
+  - The crop should show only the sidebar block and enough header/search/menu context to read it clearly.
+  - Use `tabularx` tables when describing region-by-region or menu-by-menu structure (see the bundled example for layout).
+- `05-<feature>.tex` … `NN-<feature>.tex` — one file per major feature module of the target app, numbered sequentially. Match the depth of the bundled `05-document-management.tex` (long, 632 lines, multiple subsections, multiple tabularx tables, business rules block) for complex modules; match `06-versioning.tex` (short, 78 lines, 4 subsections: Key Functions / Step-by-Step / Information Recorded / Business Rules) for simple modules. Each module file should include:
+  - `\begin{ugModule}{Overview}` block with **Purpose** and **Who Can Access** (`\ugRole{...}` pills).
+  - One or more `\subsection{}` blocks per page/screen inside the module — give every module at minimum 3 subsections.
+  - For data grids: a `tabularx` columns table with `\textbf{Column} / \textbf{Sortable} / \textbf{Description}` and one row per real column.
+  - For forms: a `tabularx` field table with `\ugField{Label} / Input type / Required / Description`.
+  - For container/card-based screens: a `\begin{ugModule}` or labeled subsection per container, each with **Purpose**, **What the code does**, **What it means**, **Step-by-step usage**, and **Expected result** — matching the depth of the reference PDF.
+  - One screenshot per container/state, captioned plainly.
+  - A final **Business Rules** subsection with bulleted constraints, validation, and access rules — every module file in the bundled example has one.
+  - Business rules / tips / warnings in `\begin{ugNote}` / `\begin{ugTip}` / `\begin{ugWarning}` blocks.
+- `<N+1>-common-tasks.tex` (`17-common-tasks.tex` in the bundled 12-module reference) — 3–6 `\begin{ugTask}{Task Title}` blocks. Each task must contain `\textbf{Objective:}`, `\begin{ugSteps} ... \end{ugSteps}`, and `\textbf{Expected Outcome:}` (or `\textbf{Tip:}` where appropriate). Use `\ugButton`/`\ugField`/`\ugMenu` references inside the steps. Do not collapse a multi-step task into a one-line "Click X" instruction.
+- `<N+2>-troubleshooting.tex` (`18-troubleshooting.tex` in the reference) — `\begin{ugErrorTable}` with at least three `\ugError{message}{cause}{fix}` rows tied to real failure modes the user is likely to hit (failed login, missing role, empty dashboard, permission denied, etc.).
+- `<N+3>-faq.tex` (`19-faq.tex` in the reference) — at minimum five `\ugFAQ{question}{multi-sentence answer}` entries derived from non-obvious behaviour discovered in Step 1. No empty answers.
+- `<N+4>-best-practices.tex` (`20-best-practices.tex` in the reference) — 3–6 `\begin{ugBestPractice}[Title]` boxes, each with a bulleted list (`itemize`) of concrete practices. Title belongs in `[brackets]`, not inside the body.
+- `<N+5>-glossary.tex` (`21-glossary.tex` in the reference) — `\ugGlossaryEntry{Term}{Definition.}` per domain-specific term. Every term must have a real definition sentence. Cover at minimum: every role name, every status label, the auth method (SSO/OAuth/etc.), and any UI noun the guide uses (Dashboard, Container, Module, Workspace, etc.).
+- `<N+6>-appendix.tex` (`22-appendix.tex` in the reference) — keyboard shortcuts, reference tables (status codes, transition rules, roles & permissions matrix, default config, supported browsers, tech stack, contact info). Include the live `BASE_URL`, support contact, and any environment-specific URLs.
 
 ---
 
@@ -455,10 +496,35 @@ If you see Overfull `\hbox` warnings near `\ugField` in tables: the field PNG is
 Common errors and fixes:
 - `File '...' not found` for an inline UI image → the PNG slug doesn't match the `\ifstrequal` key in `ui-overrides.tex`. Re-check spelling (case-sensitive label, slug must be lowercase-hyphenated).
 - `\ugScreenshot` argument mismatch → the macro multiplies by `\textwidth` internally; pass `0.9` not `0.9\textwidth`.
+- `Missing \begin{document}` in a section file → the section was overwritten with a non-LaTeX placeholder. Replace with real LaTeX content.
+- TOC entries missing → a corresponding `\input{sections/NN-...}` line is missing from `user-guide-<APP_SLUG>.tex`, or the file exists but has no `\section{}` heading.
 
 ---
 
-### Step 10 — Report
+### Step 10 — Self-review before reporting
+
+Before declaring success, open the compiled PDF (or grep the section files) and verify all of the following:
+
+- [ ] The cover logo is the **target app's brand**, not the bundled template's example logo.
+- [ ] The cover colors match the target app's primary brand color, not the example template's purple.
+- [ ] The TOC lists section 6 as multiple `06-XX` sub-modules — **one chapter per feature module, never collapsed**.
+- [ ] Total chapter count in TOC ≥ 12 (Doc Control + Intro + System + Getting Started + UI + at least one feature module + Common Tasks + Troubleshooting + FAQ + Best Practices + Glossary + Appendix).
+- [ ] Every feature-module `.tex` file (chapters 5+) ends with a **Business Rules** subsection.
+- [ ] No bundled "Insight Doc" / "SOP" / "Sinergi Dimensi Informatika" / "Keycloak" / "MinIO" / "Qdrant" string remains in any section file (those are the bundled reference's content; a generated guide must replace them with the target app's terms).
+- [ ] No section is empty or stub-only.
+- [ ] Troubleshooting has ≥3 real `\ugError` rows.
+- [ ] FAQ has ≥5 real `\ugFAQ` entries with multi-sentence answers.
+- [ ] Glossary has a definition body for every entry.
+- [ ] Best Practices uses `\begin{ugBestPractice}[Title]` with the title in brackets.
+- [ ] Sidebar screenshots are narrow centered crops, not full-page dashboards.
+- [ ] Each dashboard container is captured separately and explained with Purpose / What it means / Step-by-step / Expected result, not a generic "this card shows data" sentence.
+- [ ] Every inline `\ugButton`, `\ugField`, `\ugMenu` uses the exact UI label string from the source code.
+
+If any check fails, fix the underlying file and recompile. Do not ship a guide with known stub sections.
+
+---
+
+### Step 11 — Report
 
 ```bash
 ls -lh docs/user-guide-<APP_SLUG>.pdf
@@ -468,8 +534,9 @@ ls docs/ui/buttons docs/ui/fields docs/ui/menu | wc -l
 
 Report:
 - Path to PDF
-- Sections included
+- Sections included (with the full `06-XX` sub-module list)
 - Page-screenshot count
 - UI-element count (buttons / fields / menu)
 - Any flows that could not be captured and why
 - Any inline UI labels that fell through to text-only rendering (no PNG captured)
+- Confirmation that all Step 10 self-review checks passed
