@@ -1,0 +1,287 @@
+% ============================================================================
+% userguide-titlepage.sty
+% ============================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{userguide-titlepage}[2026/04/30 v1.0 User Guide Titlepage]
+
+\RequirePackage{tikz}
+\usetikzlibrary{calc,positioning,shapes.geometric}
+\RequirePackage{fontawesome5}
+\RequirePackage{graphicx}
+\RequirePackage{longtable}
+\RequirePackage{colortbl}
+\RequirePackage{booktabs}
+\RequirePackage{ifthen}
+
+% Metadata Commands
+\newcommand{\@ugAppName}{Application Name}
+\newcommand{\@ugAppSubtitle}{}
+\newcommand{\@ugAppVersion}{1.0}
+\newcommand{\@ugDocVersion}{1.0}
+\newcommand{\@ugReleaseDate}{\today}
+\newcommand{\@ugCompany}{Company Name}
+\newcommand{\@ugCompanyTagline}{}
+\newcommand{\@ugLogoPath}{}
+\newcommand{\@ugLogoWhitePath}{}
+\newcommand{\@ugCoverImagePath}{}
+\newcommand{\@ugClassification}{Internal}
+\newcommand{\@ugAuthor}{Author Name}
+\newcommand{\@ugTagline}{}
+\newcommand{\@ugWebsite}{}
+\newcommand{\@ugEmail}{}
+\newcommand{\@ugAddress}{}
+
+\newcommand{\ugAppName}[1]{\renewcommand{\@ugAppName}{#1}}
+\newcommand{\ugAppSubtitle}[1]{\renewcommand{\@ugAppSubtitle}{#1}}
+\newcommand{\ugAppVersion}[1]{\renewcommand{\@ugAppVersion}{#1}}
+\newcommand{\ugDocVersion}[1]{\renewcommand{\@ugDocVersion}{#1}}
+\newcommand{\ugReleaseDate}[1]{\renewcommand{\@ugReleaseDate}{#1}}
+\newcommand{\ugCompany}[1]{\renewcommand{\@ugCompany}{#1}}
+\newcommand{\ugCompanyTagline}[1]{\renewcommand{\@ugCompanyTagline}{#1}}
+\newcommand{\ugLogo}[1]{\renewcommand{\@ugLogoPath}{#1}}
+\newcommand{\ugLogoWhite}[1]{\renewcommand{\@ugLogoWhitePath}{#1}}
+\newcommand{\ugCoverImage}[1]{\renewcommand{\@ugCoverImagePath}{#1}}
+\newcommand{\ugClassification}[1]{\renewcommand{\@ugClassification}{#1}}
+\newcommand{\ugAuthor}[1]{\renewcommand{\@ugAuthor}{#1}}
+\newcommand{\ugTagline}[1]{\renewcommand{\@ugTagline}{#1}}
+\newcommand{\ugWebsite}[1]{\renewcommand{\@ugWebsite}{#1}}
+\newcommand{\ugEmail}[1]{\renewcommand{\@ugEmail}{#1}}
+\newcommand{\ugAddress}[1]{\renewcommand{\@ugAddress}{#1}}
+
+% Helper: icon card used on cover
+\newcommand{\@ugCoverCard}[3]{%
+  \begin{tikzpicture}[baseline=(hex.center)]
+    % Filled hexagon with gradient
+    \fill[top color=ugIconGradStart, bottom color=ugIconGradEnd, middle color=ugIconGradMid, rounded corners=1.5mm]
+      (30:6mm) \foreach \a in {90,150,210,270,330} { -- (\a:6mm) } -- cycle;
+    % Border
+    \draw[ugPrimaryLight, line width=0.6pt, rounded corners=1.5mm]
+      (30:6mm) \foreach \a in {90,150,210,270,330} { -- (\a:6mm) } -- cycle;
+    % Invisible anchor node for baseline
+    \node[inner sep=0pt, outer sep=0pt, minimum size=0pt] (hex) at (0,0) {};
+    % Icon centered — adjusted for glyph visual center
+    \node[inner sep=0pt, outer sep=0pt] at (-1.5mm,1mm) {\color{white}\footnotesize #1};
+  \end{tikzpicture}%
+  \hspace{8pt}%
+  \parbox[c]{0.55\textwidth}{%
+    \raggedright
+    {\small\bfseries\color{ugPrimary}#2}\par
+    \vspace{2pt}%
+    {\footnotesize\bfseries\color{ugDarkText}#3}%
+  }\par\vspace{6mm}
+}
+
+% Helper: footer item
+\newcommand{\ugFooterItem}[2]{%
+  \begin{tikzpicture}[baseline=(ico.center)]
+    \node[fill=ugBorder!20, circle, minimum size=10mm, inner sep=0pt] (ico) {\color{ugPrimary}\footnotesize #1};
+  \end{tikzpicture}%
+  \hspace{6pt}%
+  \begin{minipage}[c]{55mm}
+    \raggedright\scriptsize\color{ugDarkText}#2
+  \end{minipage}
+}
+
+\newcommand{\ugMakeCover}{%
+  \hypersetup{pageanchor=false}%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \vspace*{0pt}\noindent
+    \begin{tikzpicture}[remember picture, overlay]
+      % --- 1. Base Purple Gradient Background (left bright → right dark) ---
+      \fill[left color=ugCoverGradB, right color=ugPrimaryDark] (current page.south west) rectangle (current page.north east);
+
+      % --- 2. Background Pattern Overlay ---
+      \begin{scope}
+        \clip (current page.south west) rectangle (current page.north east);
+        \node[anchor=north west, inner sep=0pt, outer sep=0pt] at (current page.north west) {%
+          \includegraphics[width=0.8\paperwidth]{img/magicpattern-pattern.png}%
+        };
+      \end{scope}
+
+      % --- 3a. Background Accent Hexagon ---
+      \begin{scope}[shift={($ (current page.north east) + (0mm, -89mm) $)}]
+        \draw[fill=ugHexAccent, draw=none, rounded corners=12mm]
+          (30:75mm) \foreach \a in {90,150,210,270,330} { -- (\a:75mm) } -- cycle;
+      \end{scope}
+
+      % --- 3b. Right Hexagon Graphic ---
+      \begin{scope}[shift={($ (current page.north east) + (-21mm, -119mm) $)}]
+        % Outer Hexagon
+        \draw[fill=ugPrimary, draw=ugPrimaryLight, line width=2.5pt, rounded corners=12mm]
+          (30:75mm) \foreach \a in {90,150,210,270,330} { -- (\a:75mm) } -- cycle;
+        
+        % Inner Hexagon Image Clip
+        \ifx\@ugCoverImagePath\empty
+          % No image provided, inner hexagon remains ugPrimary from outer fill
+        \else
+          \begin{scope}
+            \clip[rounded corners=10mm]
+              (30:68mm) \foreach \a in {90,150,210,270,330} { -- (\a:68mm) } -- cycle;
+            \node at (-10mm,2mm) {\includegraphics[height=150mm]{\@ugCoverImagePath}};
+            % Subtle purple tint overlay over the image to match the aesthetic
+            \fill[ugPrimary, opacity=0.25] (-90mm, -90mm) rectangle (90mm, 90mm);
+          \end{scope}
+        \fi
+      \end{scope}
+
+      % --- 4. Bottom White Wave ---
+      % Coordinates: x% of width, y% from top → absolute from south west
+      % (0%, 46%) → (0mm, 160mm)   (16.6%, 53.4%) → (35mm, 138mm)
+      % (30.1%, 53.4%) → (63mm, 138mm)   (40.9%, 56.5%) → (86mm, 129mm)
+      % Extrapolated dip + straight right exit from reference
+      \fill[white]
+        (current page.south west) --
+        ($ (current page.south west) + (0, 160mm) $)
+        .. controls +(18mm, -5mm) and +(-18mm, 3mm) ..
+        ($ (current page.south west) + (35mm, 138mm) $)
+        .. controls +(20mm, 0mm) and +(-20mm, 0mm) ..
+        ($ (current page.south west) + (93mm, 138mm) $)
+        .. controls +(25mm, -3mm) and +(-25mm, 10mm) ..
+        ($ (current page.south west) + (145mm, 100mm) $)
+        .. controls +(20mm, -11mm) and +(-25mm, 2mm) ..
+        ($ (current page.south east) + (0, 95mm) $) --
+        (current page.south east) -- cycle;
+
+      % ======================================================================
+      % ABSOLUTE POSITIONED TEXT BLOCKS
+      % ======================================================================
+
+      % --- TOP: Logo + Company name ---
+      \node[anchor=north west, inner sep=0pt] at ($ (current page.north west) + (15mm, -15mm) $) {
+        \ifx\@ugLogoWhitePath\empty
+          {\large\bfseries\color{white}\@ugCompany}
+        \else
+          \raisebox{-4mm}{\includegraphics[height=14mm]{\@ugLogoWhitePath}}%
+          \hspace{8pt}{\large\bfseries\color{white}\MakeUppercase{\@ugCompany}}
+        \fi
+      };
+
+      % --- TITLE BLOCK ---
+      \node[anchor=north west, inner sep=0pt] at ($ (current page.north west) + (15mm, -50mm) $) {
+        \begin{minipage}{0.55\textwidth}
+          \raggedright
+          \begin{tabular}{@{}m{4pt} m{0.85\textwidth}@{}}
+            \color{white}\rule{4pt}{48pt} & 
+            {\fontsize{56}{62}\selectfont\bfseries\color{white}\@ugAppName}
+          \end{tabular}\par
+          \vspace{4mm}
+          \ifx\@ugAppSubtitle\empty\else
+            {\Large\bfseries\color{white}\@ugAppSubtitle\par}
+            \vspace{10mm}
+          \fi
+          {\color{ugPrimaryLight}\rule{45pt}{3pt}}\par
+          \vspace{6mm}
+          {\fontsize{36}{42}\selectfont\bfseries\color{ugPrimaryLight}USER GUIDE\par}
+          \ifx\@ugTagline\empty\else
+            \vspace{4mm}
+            {\large\color{white!80}\@ugTagline\par}
+          \fi
+        \end{minipage}
+      };
+
+      % --- INFO CARDS ---
+      \node[anchor=north west, inner sep=0pt] at ($ (current page.north west) + (15mm, -168mm) $) {
+        \begin{minipage}{0.55\textwidth}
+          \raggedright
+          \@ugCoverCard{\faTh}{Application Name}{\@ugAppName \ifx\@ugAppSubtitle\empty\else\ --- \@ugAppSubtitle\fi}
+          \@ugCoverCard{\faTag}{Version}{v\@ugAppVersion}
+          \@ugCoverCard{\faFile*}{Document Version}{\@ugDocVersion}
+          \@ugCoverCard{\faCalendar*}{Release Date}{\@ugReleaseDate}
+        \end{minipage}
+      };
+
+      % --- FOOTER ---
+      \node[anchor=south west, inner sep=0pt] at ($ (current page.south west) + (15mm, 10mm) $) {
+        \begin{minipage}{0.9\textwidth}
+          \raggedright
+          \begin{tabular}{@{}m{25mm} m{60mm} m{5mm} m{70mm}@{}}
+            \ifx\@ugLogoPath\empty
+              \begin{tikzpicture}
+                \node[fill=ugPrimaryLight, rounded corners=4pt, minimum size=20mm, inner sep=0pt] {\color{white}\Huge\faCube};
+              \end{tikzpicture}
+            \else
+              \includegraphics[width=18mm, height=18mm, keepaspectratio]{\@ugLogoPath}
+            \fi
+            &
+            \begin{minipage}{60mm}
+              \raggedright
+              {\normalsize\bfseries\color{ugPrimary}\@ugCompany}\par
+              \ifx\@ugCompanyTagline\empty\else
+                \vspace{4pt}%
+                {\scriptsize\itshape\color{ugMutedText}\@ugCompanyTagline\par}
+              \fi
+            \end{minipage}
+            &
+            {\color{ugBorder!50}\rule{0.5pt}{20mm}}
+            &
+            \begin{minipage}{70mm}
+              \raggedright
+              \ifx\@ugWebsite\empty\else
+                \ugFooterItem{\faGlobe}{\@ugWebsite}\par\vspace{3pt}
+              \fi
+              \ifx\@ugEmail\empty\else
+                \ugFooterItem{\faEnvelope}{\@ugEmail}\par\vspace{3pt}
+              \fi
+              \ifx\@ugAddress\empty\else
+                \ugFooterItem{\faMapMarker*}{\@ugAddress}
+              \fi
+            \end{minipage}
+          \end{tabular}
+        \end{minipage}
+      };
+      
+    \end{tikzpicture}
+  \end{titlepage}
+  \hypersetup{pageanchor=true}%
+  \setcounter{page}{1}%
+}
+
+% Document Control Page
+\newcommand{\ugDocumentControl}{%
+  \section*{Document Control}
+  \addcontentsline{toc}{section}{Document Control}
+}
+
+% Revision history table
+\newenvironment{ugRevisionHistory}{%
+  \subsection*{Revision History}
+  \begin{longtable}{@{}>{\centering}p{18mm} >{\centering}p{28mm}
+      p{35mm} p{0.38\textwidth}@{}}
+    \toprule
+    \rowcolor{ugTableHead}
+    \textcolor{white}{\textbf{Version}} &
+    \textcolor{white}{\textbf{Date}} &
+    \textcolor{white}{\textbf{Author}} &
+    \textcolor{white}{\textbf{Description}} \\
+    \midrule
+    \endhead
+}{%
+    \bottomrule
+  \end{longtable}
+}
+\newcommand{\ugRevision}[4]{%
+  #1 & #2 & #3 & #4 \\ \midrule
+}
+
+% Approvals table
+\newenvironment{ugApprovals}{%
+  \subsection*{Approvals}
+  \begin{longtable}{@{} p{30mm} p{40mm} p{28mm} p{0.25\textwidth} @{}}
+    \toprule
+    \rowcolor{ugTableHead}
+    \textcolor{white}{\textbf{Role}} &
+    \textcolor{white}{\textbf{Name}} &
+    \textcolor{white}{\textbf{Date}} &
+    \textcolor{white}{\textbf{Signature}} \\
+    \midrule
+    \endhead
+}{%
+    \bottomrule
+  \end{longtable}
+}
+\newcommand{\ugApproval}[4]{%
+  #1 & #2 & #3 & #4 \\ \midrule
+}
+
+\endinput

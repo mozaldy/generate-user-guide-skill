@@ -1,0 +1,465 @@
+% ============================================================================
+% 5. System Overview
+% ============================================================================
+\section{System Overview}
+
+Insight Doc is an enterprise knowledge management platform that
+enables organizations to centralize, govern, and protect their
+critical documents --- from SOPs, policies, and manuals to
+strategic records and technical assets --- through a single
+secure digital platform. The system provides a complete document
+lifecycle: upload, categorization, versioning, approval, secure
+distribution, access control, audit, and AI-powered search.
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Business Objectives}
+\begin{itemize}[leftmargin=18pt]
+  \item Centralize all organizational documents in a single,
+        structured knowledge repository
+  \item Enforce structured approval workflows with complete
+        audit trails for every document transition
+  \item Protect sensitive content through rasterized downloads,
+        embedded watermarking, and per-document access control
+  \item Enable intelligent retrieval via full-text search,
+        semantic search, and AI-powered chat (RAG)
+  \item Provide role-based analytics dashboards for governance
+        visibility across all organizational levels
+  \item Ensure version integrity with immutable revision history
+        and SHA-256 file checksums
+  \item Automate lifecycle management with expiry-based
+        auto-archiving and time-limited access grants
+\end{itemize}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Key Capabilities}
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Capability} & \textbf{Description} \\
+  \midrule
+  Document Management
+    & Upload PDF documents with automatic validation (MIME type,
+      magic bytes, file size), metadata tagging, and
+      categorization by document type and organizational unit \\
+  Versioning
+    & Immutable revision history --- every upload creates a new
+      version; old versions are always accessible for preview
+      or download \\
+  Approval Workflow
+    & Six-status lifecycle
+      (\,\ugStatus{ugMutedText}{Draft}\,\textrightarrow\,%
+      \ugStatus{ugWarning}{Review}\,\textrightarrow\,%
+      \ugStatus{ugInfo}{Approved}\,\textrightarrow\,%
+      \ugStatus{ugSuccess}{Active}\,\textrightarrow\,%
+      \ugStatus{ugAccent}{Archived}\,)
+      with mandatory comments on rejection \\
+  Secure Download
+    & PDF rasterization converts pages to images; auto-embedded
+      watermarks include user identity, IP, timestamp, and
+      browser --- content cannot be copied or edited \\
+  Access Control
+    & Per-document ACL grants (user or role level) with optional
+      expiry; self-service access request workflow with
+      admin approval \\
+  Share Links \& Tokens
+    & Public share links with configurable expiry and download
+      limits; one-time download tokens (30-minute signed URLs)
+      for external recipients \\
+  AI Intelligence
+    & Full-text search across document content; RAG-based chat
+      assistant with cited, source-grounded answers \\
+  Audit \& Analytics
+    & Detailed download logs with IP geolocation; unified
+      activity timeline; role-specific dashboards
+      (Admin, Reviewer, Staff) \\
+  Lifecycle Management
+    & Soft delete with restore capability; automatic archiving
+      of documents past their expiry date \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{System Architecture}
+
+Insight Doc is composed of six microservices working together
+as a cohesive platform:
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Service} & \textbf{Stack} & \textbf{Responsibility} \\
+  \midrule
+  Backend API
+    & .NET 9, PostgreSQL
+    & Core REST API --- document CRUD, approval workflows, ACL,
+      download, share links, dashboards, and audit \\
+  Frontend
+    & React 19, Vite 7
+    & Web application with role-based views, data grids,
+      approval center, and analytics dashboards \\
+  PDF Service
+    & .NET, Redis Stream
+    & Asynchronous PDF processing --- rasterization, watermark
+      stamping, and thumbnail generation \\
+  AI Ingest Worker
+    & Python 3, FastAPI
+    & Listens to Redis Stream events; downloads PDFs from MinIO,
+      parses via Docling, chunks, embeds (BGE-M3), and upserts
+      into Qdrant \\
+  RAG System
+    & .NET 10 Gateway +\newline Python Worker
+    & Chat orchestration via Gemini; hybrid retrieval (dense +
+      sparse search), cross-encoder reranking, and citation-
+      validated grounded answers \\
+  Keycloak Sync
+    & .NET 9
+    & Synchronizes user and organizational data from the
+      enterprise directory to Keycloak for SSO provisioning \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugNote}
+  All services communicate through well-defined interfaces ---
+  REST APIs for synchronous calls, and \textbf{Redis Streams} for
+  asynchronous event-driven processing (PDF rendering, AI
+  ingestion). File storage is handled by \textbf{MinIO}
+  (S3-compatible object storage), and vector search is powered
+  by \textbf{Qdrant}.
+\end{ugNote}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Infrastructure Components}
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Component} & \textbf{Technology} & \textbf{Purpose} \\
+  \midrule
+  Database        & PostgreSQL 14+   & Primary relational data store
+                                       for all document metadata, audit
+                                       logs, and access records \\
+  Cache           & Redis            & Session caching, rate limiting
+                                       counters, and inter-service
+                                       message streaming \\
+  Object Storage  & MinIO (S3)       & Binary file storage for PDF
+                                       documents, thumbnails, and
+                                       rasterized outputs \\
+  Identity Provider & Keycloak       & OpenID Connect SSO with JWT
+                                       bearer authentication and
+                                       role-based authorization \\
+  Vector Database & Qdrant           & Dense + sparse vector storage
+                                       for semantic document search
+                                       and RAG retrieval \\
+  Container Runtime & Docker         & All services containerized
+                                       with multi-stage builds and
+                                       GitLab CI/CD pipelines \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{User Roles}
+
+Insight Doc implements a role-based access control model with
+four primary roles and one implicit public role:
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Role} & \textbf{Badge} & \textbf{Access Level} \\
+  \midrule
+  Admin
+    & \ugRole{Admin}
+    & Full system access --- manage users, master data,
+      all documents, and system configuration \\
+  Manager
+    & \ugRole{Manager}
+    & Manage documents, approvals, and access control
+      within their organizational unit \\
+  Reviewer
+    & \ugRole{Reviewer}
+    & Review and approve or reject documents submitted
+      for the approval workflow \\
+  Staff
+    & \ugRole{Staff}
+    & Upload, view, and manage own documents; request
+      access to restricted documents \\
+  Public
+    & ---
+    & Download documents only via share links or
+      one-time download tokens (no login required) \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Security Architecture}
+
+Insight Doc implements six layers of defense to protect
+organizational knowledge assets:
+
+\begin{ugSteps}
+  \item \textbf{Layer 1 --- JWT Authentication (Keycloak)}\\
+    All API endpoints require a valid JWT token issued by
+    Keycloak, except anonymous download and share link
+    endpoints.
+
+  \item \textbf{Layer 2 --- Role-Based Access Control (RBAC)}\\
+    Each endpoint is restricted by role ---
+    \ugRole{Admin}, \ugRole{Manager}, \ugRole{Reviewer},
+    or \ugRole{Staff} --- preventing unauthorized operations.
+
+  \item \textbf{Layer 3 --- Per-Document ACL}\\
+    Fine-grained access grants at the individual document
+    level, supporting both user-based and role-based entries
+    with optional time-limited expiry.
+
+  \item \textbf{Layer 4 --- Rate Limiting}\\
+    Download frequency is capped per user per document per
+    hour (default: 10) to prevent abuse and bulk extraction.
+
+  \item \textbf{Layer 5 --- File Integrity}\\
+    Every uploaded file is validated via magic bytes
+    verification and hashed with SHA-256. Checksums are
+    stored per version for tamper detection.
+
+  \item \textbf{Layer 6 --- Content Protection}\\
+    Downloaded PDFs are rasterized (converted to images)
+    with embedded watermarks containing the downloader's
+    identity, IP address, timestamp, and browser ---
+    making content impossible to copy, select, or edit.
+\end{ugSteps}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Document Lifecycle}
+
+Every document in Insight Doc follows a structured lifecycle
+governed by the six-status approval workflow:
+
+\begin{ugSteps}
+  \item \textbf{Upload} --- A \ugRole{Staff}, \ugRole{Manager},
+    or \ugRole{Admin} uploads a PDF document with metadata
+    (title, type, unit, tags, description). The system validates
+    the file, computes a SHA-256 checksum, stores it in MinIO,
+    extracts text for search indexing, and generates a thumbnail.
+    The document enters \ugStatus{ugMutedText}{Draft} status.
+
+  \item \textbf{Submit for Review} --- The document owner
+    transitions the document from
+    \ugStatus{ugMutedText}{Draft} to
+    \ugStatus{ugWarning}{Review}, making it visible in the
+    Reviewer's approval queue.
+
+  \item \textbf{Review} --- A \ugRole{Reviewer} examines the
+    document and either approves it (moving to
+    \ugStatus{ugInfo}{Approved}) or rejects it with mandatory
+    comments (moving to \ugStatus{ugDanger}{Rejected}, which
+    returns it to Draft for revision).
+
+  \item \textbf{Publish} --- An approved document is activated
+    by transitioning to \ugStatus{ugSuccess}{Active}, making it
+    accessible to authorized users for preview and download.
+
+  \item \textbf{Monitor} --- Active documents can be downloaded
+    (with watermarking), shared via public links or tokens,
+    and revised with new versions. All interactions are logged
+    in the audit timeline.
+
+  \item \textbf{Archive} --- Documents are archived either
+    manually or automatically when their expiry date passes.
+    Archived documents move to
+    \ugStatus{ugAccent}{Archived} status and are excluded
+    from active search results.
+\end{ugSteps}
+
+\begin{ugTip}
+  Documents can be \textbf{soft-deleted} and later restored by an
+  \ugRole{Admin} or \ugRole{Manager}. Deletion does not remove
+  the file from storage --- it marks the record as inactive,
+  preserving the full audit trail.
+\end{ugTip}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Functional Module Map}
+
+The following table summarizes all functional modules and the
+roles that can access each:
+
+\begin{tabularx}{\textwidth}{@{} r l X c @{}}
+  \toprule
+  \textbf{\#} & \textbf{Module} & \textbf{Description}
+    & \textbf{Roles} \\
+  \midrule
+  1 & Document List
+    & Browse, search, and filter all documents with
+      pagination and thumbnail grid
+    & All \\
+  2 & Document Detail
+    & View metadata, version history, activity timeline,
+      and download statistics
+    & All \\
+  3 & Upload \& Edit
+    & Upload new documents, edit metadata, and upload
+      revisions
+    & A, M, S \\
+  4 & Download
+    & Download documents (watermarked), generate
+      download tokens
+    & All \\
+  5 & Approval Center
+    & Review, approve, or reject submitted documents
+    & A, M, R \\
+  6 & Access Control
+    & Grant, revoke, and manage per-document access;
+      process access requests
+    & A, M \\
+  7 & Share Links
+    & Create, manage, and revoke public share links
+    & A, M \\
+  8 & Trash / Archive
+    & Soft delete and restore documents
+    & A, M \\
+  9 & Master Data
+    & Manage document types, statuses, organizational
+      units, and ACL groups
+    & A \\
+  10 & User Management
+    & Manage users and roles
+    & A \\
+  11 & Dashboard
+    & Role-specific analytics (Admin, Reviewer, Staff)
+    & All \\
+  12 & AI Chat
+    & Natural language Q\&A with source citations
+    & All \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugNote}[Legend]
+  \textbf{A}\,=\,Admin\quad
+  \textbf{M}\,=\,Manager\quad
+  \textbf{R}\,=\,Reviewer\quad
+  \textbf{S}\,=\,Staff\quad
+  \textbf{All}\,=\,All authenticated roles.
+  Public users can only access documents via share links
+  and download tokens.
+\end{ugNote}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Data Model Overview}
+
+At its core, Insight Doc is built around the following key data
+entities and their relationships:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Entity} & \textbf{Description} \\
+  \midrule
+  \textbf{Document}
+    & Central entity --- title, description, tags, document
+      type, organizational unit, status, effective date,
+      expiry date, and ownership metadata \\
+  \textbf{DocumentVersion}
+    & Immutable version record linked to a Document --- stores
+      file path, SHA-256 checksum, size, MIME type, original
+      file name, and extracted text \\
+  \textbf{DocumentAccess}
+    & Per-document ACL entry --- links a user or role to a
+      document with optional expiry date \\
+  \textbf{DocumentAccessRequest}
+    & Self-service access request --- stores the requesting
+      user, reason, status (Pending/Approved/Rejected),
+      and approver \\
+  \textbf{DocumentShareLink}
+    & Reusable share link with optional expiry date and
+      download count limit \\
+  \textbf{DownloadLog}
+    & Audit record for every download --- user, IP, geolocation,
+      browser, timestamp, and version downloaded \\
+  \textbf{DocumentStatusHistory}
+    & Transition log --- from-status, to-status, who, when,
+      and comment (mandatory on rejection) \\
+  \textbf{DocumentType}
+    & Master data --- SOP, SK, Proposal, Report, etc. \\
+  \textbf{DocumentStatus}
+    & Master data --- Draft, Review, Approved, Active,
+      Archived, Rejected \\
+  \textbf{Unit}
+    & Organizational unit --- IT, HR, Finance, Legal, etc. \\
+  \textbf{Acl}
+    & Reusable access control group for batch access
+      management \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugNote}
+  All entities include standard audit fields:
+  \texttt{CreatedDate}, \texttt{UpdatedDate},
+  \texttt{DeletedDate}, \texttt{CreatedBy},
+  \texttt{UpdatedBy}, and \texttt{DeletedBy}. Soft deletion
+  sets \texttt{DeletedDate} and \texttt{IsActive = false}
+  without physically removing data.
+\end{ugNote}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Integration Points}
+
+Insight Doc integrates with the following external systems:
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{System} & \textbf{Protocol}
+    & \textbf{Integration Purpose} \\
+  \midrule
+  Keycloak
+    & OIDC / JWT
+    & User authentication, role synchronization, and
+      SSO session management \\
+  MinIO
+    & S3 REST API
+    & Store and retrieve PDF files, thumbnails, and
+      rasterized watermarked outputs \\
+  Redis
+    & Redis Protocol + Streams
+    & Caching, rate limiting counters, and asynchronous
+      event streaming (document upload events trigger
+      PDF processing and AI ingestion) \\
+  Qdrant
+    & gRPC / REST
+    & Store and query document vector embeddings for
+      semantic search and RAG retrieval \\
+  Gemini LLM
+    & REST (API Key)
+    & Natural language chat, query routing, and
+      citation-validated answer generation \\
+  HashiCorp Vault
+    & REST
+    & Secret management for database credentials, API
+      keys, and encryption keys \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Deployment Model}
+
+All Insight Doc services are containerized and deployed using
+Docker with GitLab CI/CD pipelines:
+
+\begin{itemize}[leftmargin=18pt]
+  \item Each service has a \textbf{multi-stage Dockerfile} ---
+        build stage uses the full SDK, runtime stage uses
+        minimal images for security and performance.
+  \item \textbf{GitLab CI/CD} pipelines automate build, test,
+        and deployment to staging and production environments.
+  \item Services communicate over a shared \textbf{Docker
+        network} with internal DNS resolution.
+  \item Configuration is managed via \textbf{environment
+        variables} and \texttt{appsettings.json} files, with
+        secrets injected from HashiCorp Vault.
+  \item \textbf{Health checks} verify connectivity to
+        PostgreSQL, Redis, MinIO, Keycloak, and Qdrant at
+        startup with retry policies.
+\end{itemize}
+
+\begin{ugTip}
+  In production, all services run behind a reverse proxy
+  (NGINX or Traefik) with TLS termination. Internal
+  service-to-service traffic uses private network addressing.
+\end{ugTip}
+
+\newpage

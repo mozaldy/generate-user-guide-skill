@@ -1,0 +1,31 @@
+% ============================================================================
+% userguide-lists.sty
+% ============================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{userguide-lists}[2026/04/30 v1.0 User Guide Lists]
+
+\RequirePackage{enumitem}
+\RequirePackage{tikz}
+
+% Step-by-Step Environment
+\newcounter{ugstep}
+\newenvironment{ugSteps}{%
+  \setcounter{ugstep}{0}%
+  \begin{list}{%
+    \stepcounter{ugstep}%
+    \tikz[baseline=(num.base)]{%
+      \node[fill=ugSecondary, text=white, circle,
+            inner sep=0pt, minimum size=20pt,
+            font=\small\bfseries] (num) {\theugstep};
+    }%
+  }{%
+    \setlength{\leftmargin}{32pt}%
+    \setlength{\labelsep}{10pt}%
+    \setlength{\itemsep}{6pt}%
+    \setlength{\parsep}{2pt}%
+  }%
+}{%
+  \end{list}%
+}
+
+\endinput

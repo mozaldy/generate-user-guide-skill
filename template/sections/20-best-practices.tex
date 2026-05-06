@@ -1,0 +1,145 @@
+% ============================================================================
+% 12. Best Practices
+% ============================================================================
+\section{Best Practices}
+
+\begin{ugBestPractice}[Document Upload \& Metadata]
+  \begin{itemize}[leftmargin=14pt]
+    \item Use clear, descriptive titles that follow your
+          organization's naming convention.
+    \item Always assign the correct \ugField{Document Type} and
+          \ugField{Unit} for accurate categorization.
+    \item Add relevant \ugField{Tags} (comma-separated) to
+          improve search discoverability.
+    \item Write a concise \ugField{Description} summarizing the
+          document's purpose and scope.
+    \item Set an \ugField{Effective Date} and
+          \ugField{Expiry Date} when applicable to enable
+          automatic lifecycle management.
+    \item Verify your PDF is text-based (not scanned images)
+          for optimal full-text search results.
+  \end{itemize}
+\end{ugBestPractice}
+
+\vspace{6pt}
+
+\begin{ugBestPractice}[Version Management]
+  \begin{itemize}[leftmargin=14pt]
+    \item Upload revisions through the \ugButton{Upload Revision}
+          button rather than creating a new document --- this
+          preserves the version chain.
+    \item Use metadata-only updates (title, tags, description)
+          when the file content has not changed.
+    \item Before submitting for review, verify you have uploaded
+          the final, correct version of the file.
+    \item Periodically review old versions and archive documents
+          that are no longer active.
+  \end{itemize}
+\end{ugBestPractice}
+
+\vspace{6pt}
+
+\begin{ugBestPractice}[Security \& Access Control]
+  \begin{itemize}[leftmargin=14pt]
+    \item Never share your Keycloak credentials with others.
+    \item Lock your workstation when leaving your desk
+          (\ugKey{Win}+\ugKey{L} on Windows,
+           \ugKey{Cmd}+\ugKey{Ctrl}+\ugKey{Q} on macOS).
+    \item Use \textbf{time-limited access grants} when sharing
+          documents with temporary collaborators.
+    \item Prefer \textbf{download tokens} (one-time use) over
+          share links for highly sensitive documents.
+    \item Regularly review the \ugMenu{Access} tab to revoke
+          access for users who no longer need it.
+    \item Report any suspicious download patterns or
+          unauthorized access attempts to your administrator
+          immediately.
+  \end{itemize}
+\end{ugBestPractice}
+
+\vspace{6pt}
+
+\begin{ugBestPractice}[Approval Workflow]
+  \begin{itemize}[leftmargin=14pt]
+    \item Reviewers should complete reviews within 3 business
+          days to prevent pipeline bottlenecks.
+    \item When rejecting a document, provide specific,
+          actionable feedback in the mandatory comment field.
+    \item Document owners should address rejection comments
+          promptly and resubmit.
+    \item Use the \ugMenu{Status History} tab to track the
+          full review trail for any document.
+  \end{itemize}
+\end{ugBestPractice}
+
+\vspace{6pt}
+
+\begin{ugBestPractice}[AI Chat \& Search]
+  \begin{itemize}[leftmargin=14pt]
+    \item Ask specific, well-formed questions for better AI
+          answers (e.g., ``What is the safety procedure for
+          chemical storage in Building~A?'').
+    \item Always verify AI-generated answers by clicking the
+          source citations (\texttt{[S1]}, \texttt{[S2]}) and
+          reading the original passages.
+    \item Use full-text search for precise keyword matching;
+          use AI Chat for conceptual or summary-type questions.
+    \item If search returns no results for a known document,
+          check that the document has been uploaded and its
+          text has been successfully extracted.
+  \end{itemize}
+\end{ugBestPractice}
+
+\vspace{6pt}
+
+\begin{ugBestPractice}[Dashboard \& Monitoring]
+  \begin{itemize}[leftmargin=14pt]
+    \item Check your role-specific dashboard daily for pending
+          items (review requests, access requests, expiring
+          documents).
+    \item \ugRole{Admin} and \ugRole{Manager} users should
+          monitor the download trend chart for unusual spikes.
+    \item Use the unified activity timeline to stay informed
+          about document lifecycle events.
+    \item Address pending items promptly --- especially access
+          requests and review queues.
+  \end{itemize}
+\end{ugBestPractice}
+
+\vspace{6pt}
+
+\begin{ugBestPractice}[Compliance \& Governance]
+  \begin{itemize}[leftmargin=14pt]
+    \item Set \ugField{Expiry Date} on all time-sensitive
+          documents (e.g., SOPs, policies) to enable
+          automatic lifecycle management.
+    \item Periodically audit the \ugMenu{Access} tab of
+          sensitive documents to ensure only authorized users
+          have access.
+    \item Use the Admin dashboard's ``Pending Items'' alerts
+          to stay on top of expiring documents and access
+          grants.
+    \item Maintain consistent document type classification ---
+          use the master data definitions rather than ad-hoc
+          categories.
+  \end{itemize}
+\end{ugBestPractice}
+
+\vspace{6pt}
+
+\begin{ugBestPractice}[Document Naming Conventions]
+  \begin{itemize}[leftmargin=14pt]
+    \item Follow a consistent naming pattern, e.g.,
+          \texttt{[Type]-[Unit]-[Title]-[Year]}, such as
+          ``SOP-IT-Network Security Policy-2026''.
+    \item Avoid special characters in titles (\texttt{\&},
+          \texttt{\%}, \texttt{\#}) as they may affect search
+          indexing.
+    \item Keep titles concise but descriptive --- aim for
+          10--15 words maximum.
+    \item Use tags for secondary categorization that does not
+          fit into the title.
+  \end{itemize}
+\end{ugBestPractice}
+
+\newpage

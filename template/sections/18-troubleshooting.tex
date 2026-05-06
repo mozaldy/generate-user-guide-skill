@@ -1,0 +1,124 @@
+% ============================================================================
+% 10. Error Messages and Troubleshooting
+% ============================================================================
+\section{Error Messages and Troubleshooting}
+
+\subsection{Common Error Messages}
+
+\begin{ugErrorTable}
+  \ugError{401 Unauthorized}
+    {JWT token expired or invalid}
+    {Log out and log in again. If the issue persists,
+     clear browser cookies and retry.}
+  \ugError{403 Forbidden: Access Denied}
+    {Insufficient role permissions or no ACL entry for
+     this document}
+    {Verify your role with your administrator. If you need
+     document-level access, submit an access request
+     via \ugButton{Request Access}.}
+  \ugError{400 Bad Request: Rate limit exceeded}
+    {More than 10 downloads per hour for the same document}
+    {Wait until the next hour window resets, then try again.
+     Default limit: 10 downloads/user/document/hour.}
+  \ugError{400 Bad Request: Invalid file type}
+    {Uploaded file is not a valid PDF (MIME type or magic
+     bytes check failed)}
+    {Ensure you are uploading a genuine PDF file. Renamed
+     files (e.g., \texttt{.docx} renamed to \texttt{.pdf})
+     are rejected.}
+  \ugError{400 Bad Request: File too large}
+    {File exceeds the maximum upload size (default 50~MB)}
+    {Compress the PDF or split it into smaller files.
+     Contact your admin if a larger limit is needed.}
+  \ugError{404 Not Found: Document not found}
+    {The document has been soft-deleted or the ID is invalid}
+    {Check the document ID. If the document was deleted,
+     contact an \ugRole{Admin} to restore it from
+     \ugMenu{Documents > Trash}.}
+  \ugError{400 Bad Request: Token expired}
+    {Download token has passed its 30-minute validity period}
+    {Request a new download token from the document owner.
+     Tokens are single-use and valid for 30 minutes only.}
+  \ugError{400 Bad Request: Token already used}
+    {Download token has already been consumed}
+    {Each download token can only be used once. Request a
+     new token from the document owner.}
+  \ugError{400 Bad Request: Share link limit reached}
+    {Share link's maximum download count has been reached}
+    {Contact the link creator to increase the limit or
+     create a new share link.}
+  \ugError{400 Bad Request: Document expired}
+    {Document's expiry date has passed}
+    {The document is no longer accessible. Contact the
+     document owner or an \ugRole{Admin} to update the
+     expiry date or create a new version.}
+\end{ugErrorTable}
+
+\subsection{General Troubleshooting}
+
+\begin{tabularx}{\textwidth}{@{} p{0.30\textwidth} X @{}}
+  \toprule
+  \textbf{Symptom} & \textbf{Resolution} \\
+  \midrule
+  Page loads blank or shows a spinner indefinitely
+    & Clear your browser cache and reload. Ensure JavaScript
+      is enabled. Check your internet connection. \\
+  Preview does not display the PDF
+    & Ensure you are using a supported browser (Chrome 120+,
+      Firefox 115+, Edge 120+). Disable any PDF-blocking
+      browser extensions. \\
+  Notifications are not appearing in real-time
+    & WebSocket connection to RabbitMQ may be interrupted.
+      Refresh the page. If the issue persists, contact IT. \\
+  Watermarked download takes too long
+    & Large documents (100+ pages) require more processing
+      time. Subsequent downloads of the same version are
+      served from cache and will be faster. \\
+  Search returns no results
+    & Verify your search terms. Full-text search covers
+      extracted content, but scanned-image PDFs require
+      OCR processing. Check with your admin if OCR is
+      enabled. \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugImportant}
+  If an error persists after following the resolution steps,
+  capture a screenshot of the error message and contact the
+  IT Help Desk at \texttt{helpdesk@sindika.co.id} or extension
+  \textbf{4500}. Please include your \textbf{username},
+  \textbf{the document ID} (if applicable), and the
+  \textbf{timestamp} of the error.
+\end{ugImportant}
+
+\subsection{Escalation Procedure}
+
+If the IT Help Desk cannot resolve your issue, the following
+escalation path applies:
+
+\begin{ugSteps}
+  \item \textbf{Level 1 --- IT Help Desk}\\
+    First point of contact for all user-facing issues. Handles
+    account resets, role assignments, browser troubleshooting,
+    and general guidance. Response time: within 4 business hours.
+
+  \item \textbf{Level 2 --- System Administrator}\\
+    Escalated issues involving configuration changes, master
+    data corrections, bulk operations, or infrastructure
+    connectivity. Response time: within 8 business hours.
+
+  \item \textbf{Level 3 --- Development Team}\\
+    Critical bugs, data integrity issues, or feature requests
+    that require code-level investigation. Response time: as
+    per SLA agreement.
+\end{ugSteps}
+
+\begin{ugTip}
+  When reporting an issue, always include:
+  \textbf{(1)} your username, \textbf{(2)} the URL or page
+  where the error occurred, \textbf{(3)} the exact error
+  message or screenshot, \textbf{(4)} the date and time,
+  and \textbf{(5)} the steps to reproduce the problem.
+\end{ugTip}
+
+\newpage

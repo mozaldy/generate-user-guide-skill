@@ -1,0 +1,90 @@
+% ============================================================================
+% Core Feature: Share Links & Download Tokens
+% ============================================================================
+\section{Share Links \& Download Tokens}
+
+\begin{ugModule}{Overview}
+
+  \textbf{Purpose:}
+  Share documents with external recipients who do not have
+  system accounts, using secure, controlled links.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager}
+\end{ugModule}
+
+\subsection{Share Links vs.\ Download Tokens}
+
+\begin{tabularx}{\textwidth}{@{} l X X @{}}
+  \toprule
+  \textbf{Aspect} & \textbf{Share Link}
+    & \textbf{Download Token} \\
+  \midrule
+  Usage
+    & Reusable (until limit or revoked)
+    & One-time use only \\
+  Validity
+    & Configurable expiry (optional)
+    & Fixed 30 minutes \\
+  Download Limit
+    & Configurable (optional)
+    & Exactly 1 download \\
+  Revocation
+    & Can be revoked at any time
+    & Cannot be revoked \\
+  Use Case
+    & Share with multiple people
+    & Send to one specific recipient \\
+  Authentication
+    & Not required (public)
+    & Not required (public) \\
+  Watermark
+    & Applied (identity: ``Public'')
+    & Applied (identity: ``Public'') \\
+  \bottomrule
+\end{tabularx}
+
+\subsection{Step-by-Step: Creating a Share Link}
+\begin{ugSteps}
+  \item Open the document detail page.
+  \item Navigate to the \ugMenu{Share} tab.
+  \item Click \ugButton{Create Share Link}.
+  \item Optionally set an \ugField{Expiry Date} and
+        \ugField{Max Downloads}.
+  \item Click \ugButton{Generate}.
+  \item Copy the generated link and share it with recipients.
+\end{ugSteps}
+
+\subsection{Step-by-Step: Generating a Download Token}
+\begin{ugSteps}
+  \item Open the document detail page.
+  \item Click \ugButton{Generate Token}.
+  \item A one-time download link is generated (valid for
+        30~minutes).
+  \item Copy and send the link to the intended recipient.
+\end{ugSteps}
+
+\subsection{Share Link Validation}
+
+When a recipient accesses a share link, the system performs
+the following validation chain:
+
+\begin{enumerate}[leftmargin=18pt]
+  \item Is the token valid and active (not revoked)?
+  \item Has the link expired (past its expiry date)?
+  \item Has the download limit been reached?
+  \item Is the linked document still active
+        (\texttt{IsActive = true})?
+  \item Has the document passed its own expiry date?
+\end{enumerate}
+
+If any check fails, access is denied with an appropriate
+error message.
+
+\begin{ugWarning}
+  Download tokens cannot be revoked once generated. Use
+  share links (which can be revoked) for situations where
+  you may need to retract access later.
+\end{ugWarning}
+
+\newpage

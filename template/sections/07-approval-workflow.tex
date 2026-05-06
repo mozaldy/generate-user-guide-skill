@@ -1,0 +1,298 @@
+% ============================================================================
+% Core Feature: Approval Workflow
+% ============================================================================
+\section{Approval Workflow}
+
+\begin{ugModule}{Overview}
+
+  \textbf{Purpose:}
+  Route documents through a multi-level, position-based
+  approval chain with full audit trail and rejection handling.
+
+  \textbf{Who Can Access:}
+  \ugRole{Admin} \ugRole{Manager} \ugRole{Reviewer}
+\end{ugModule}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{How Approval Routing Works}
+
+Unlike a simple status-based workflow, InsightDoc uses a
+\textbf{position-based multi-level approval chain}. Each
+document is routed through up to 6 approval levels, where
+each level is assigned to a specific unit division position.
+
+The approval chain is determined by the \ugField{Approval
+Purpose} selected during document creation (see
+Document Management, Tab~1). Each Approval Purpose defines:
+
+\begin{itemize}[leftmargin=18pt]
+  \item Which \textbf{Unit} it belongs to
+  \item Up to \textbf{6 approval levels}, each mapped to a
+        Unit Division Level (position/role within the unit)
+  \item The \textbf{sequential order} of approvals
+\end{itemize}
+
+\begin{ugNote}
+  Approval Purposes are configured by the \ugRole{Admin} in
+  \ugMenu{Settings > Approval Configuration > Approval
+  Purpose}. Each purpose defines a complete signing chain
+  specific to a unit and document type.
+\end{ugNote}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Approval Levels}
+
+Each document can have up to 6 approval levels:
+
+\begin{tabularx}{\textwidth}{@{} c l X @{}}
+  \toprule
+  \textbf{Level} & \textbf{Position}
+    & \textbf{Description} \\
+  \midrule
+  1 & Level 1 Approver
+    & First approval in the chain (e.g., Section Head) \\
+  2 & Level 2 Approver
+    & Second approval (e.g., Department Head) \\
+  3 & Level 3 Approver
+    & Third approval (e.g., Division Head) \\
+  4 & Level 4 Approver
+    & Fourth approval (e.g., Director) \\
+  5 & Level 5 Approver
+    & Fifth approval (e.g., VP) \\
+  6 & Level 6 Approver
+    & Final approval (e.g., President Director) \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{6pt}
+
+Not all levels are required. If an Approval Purpose only
+defines Level~1 through Level~3, levels 4--6 are skipped
+automatically.
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Approval Status Per Level}
+
+Each approval level has its own status, independent of the
+overall document status:
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+  \toprule
+  \textbf{Status} & \textbf{Code}
+    & \textbf{Description} \\
+  \midrule
+  Waiting Previous
+    & \texttt{waiting-previous}
+    & This level is blocked until all previous
+      levels are approved \\
+  Waiting Approval
+    & \texttt{waiting-approval}
+    & This level is the current active approver;
+      action is required \\
+  Approved
+    & \texttt{approved}
+    & This level has been approved; recorded with
+      approver name and timestamp \\
+  Rejected
+    & \texttt{rejected}
+    & This level has been rejected; recorded with
+      rejector name, timestamp, and reason \\
+  Skipped
+    & \texttt{skipped}
+    & This level was not configured for this
+      document's Approval Purpose \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Approval Flow}
+
+The approval process follows this sequential logic:
+
+\begin{enumerate}[leftmargin=18pt]
+  \item When a document is created, the system generates
+        \texttt{DocumentApproval} records for each configured
+        level.
+  \item Level~1 starts with
+        \texttt{waiting-approval} status.
+  \item Levels 2+ start with
+        \texttt{waiting-previous} status.
+  \item Unconfigured levels are set to
+        \texttt{skipped}.
+  \item When Level~$n$ approves, Level~$n+1$ transitions
+        from \texttt{waiting-previous} to
+        \texttt{waiting-approval}.
+  \item When all configured levels approve, the document
+        status transitions to
+        \ugStatus{ugInfo}{Approved}.
+  \item If \textbf{any} level rejects, the entire document
+        is rejected --- the document is marked as
+        \ugStatus{ugDanger}{Rejected} with the rejection
+        reason, rejector identity, and the level that rejected.
+\end{enumerate}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Status Progress Track}
+
+On the Document List page, the \ugField{Status} column displays
+a visual \textbf{multi-step progress track} showing all
+approval levels and their current status:
+
+\begin{itemize}[leftmargin=18pt]
+  \item Each step represents one approval level
+  \item Approved levels show a green checkmark
+  \item The current waiting level is highlighted
+  \item Rejected levels show a red indicator with the
+        rejection reason visible on hover
+  \item Skipped levels are grayed out
+\end{itemize}
+
+This gives users an immediate visual overview of where a
+document stands in its approval chain.
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Approval Data Recorded}
+
+Each \texttt{DocumentApproval} record stores the following:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Field} & \textbf{Description} \\
+  \midrule
+  Document
+    & Reference to the document being approved \\
+  Level
+    & The approval level (1--6) \\
+  Unit Division
+    & The organizational position assigned as
+      approver \\
+  Approval Status
+    & Current status of this level \\
+  User
+    & The specific user assigned to approve \\
+  Approved By
+    & Name of the person who approved \\
+  Approved Date
+    & Timestamp of approval \\
+  Rejected By
+    & Name of the person who rejected \\
+  Rejected Date
+    & Timestamp of rejection \\
+  Rejected User
+    & Reference to the rejecting user's account \\
+  \bottomrule
+\end{tabularx}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Rejection Handling}
+
+When a document is rejected at any level:
+
+\begin{enumerate}[leftmargin=18pt]
+  \item The rejection is recorded on both the
+        \texttt{DocumentApproval} record (level-specific) and
+        the \texttt{Document} entity itself.
+  \item The document stores:
+    \begin{itemize}[leftmargin=14pt]
+      \item \texttt{IsRejected = true}
+      \item \texttt{RejectedLevelId} --- which level rejected
+      \item \texttt{RejectedBy} --- who rejected
+      \item \texttt{RejectedReason} --- mandatory comment
+      \item \texttt{RejectedDate} --- when
+      \item \texttt{RejectedUserId} --- rejector's user ID
+    \end{itemize}
+  \item The document's \ugField{Document Status} transitions to
+        \ugStatus{ugDanger}{Rejected}.
+  \item The document owner is notified and can revise the
+        document for resubmission.
+\end{enumerate}
+
+\begin{ugImportant}
+  Rejection reasons are \textbf{mandatory} and permanently
+  recorded. They are visible on the document's status progress
+  track (on hover) and in the document detail page. Write
+  specific, actionable feedback to help the document owner
+  address the issues effectively.
+\end{ugImportant}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Step-by-Step: Approving a Document}
+
+\begin{ugSteps}
+  \item Navigate to \ugMenu{Approval Center}.
+  \item The list shows documents where you are the current
+        active approver (your level has
+        \texttt{waiting-approval} status).
+  \item Click a document to view its detail and preview.
+  \item Review the document content via the in-browser PDF
+        preview.
+  \item Click \ugButton{Approve} to approve at your level.
+  \item Confirm the action in the modal dialog.
+  \item If you are the final approver, the document transitions
+        to \ugStatus{ugInfo}{Approved}. Otherwise, the next
+        level is activated.
+\end{ugSteps}
+
+\subsection{Step-by-Step: Rejecting a Document}
+
+\begin{ugSteps}
+  \item Navigate to \ugMenu{Approval Center}.
+  \item Click the document to review.
+  \item Click \ugButton{Reject}.
+  \item Enter a \textbf{mandatory rejection reason} in the
+        comment field.
+  \item Confirm the rejection.
+  \item The document is marked as Rejected with your identity,
+        the level, and the reason recorded.
+\end{ugSteps}
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Activity Tracking}
+
+All approval and rejection actions are recorded as
+\texttt{DocumentActivity} entries with the following action
+codes:
+
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+  \toprule
+  \textbf{Action Code} & \textbf{Description} \\
+  \midrule
+  \texttt{approve-document}
+    & Document was approved at a specific level \\
+  \texttt{reject-document}
+    & Document was rejected at a specific level \\
+  \texttt{upload-document}
+    & A new document was created or revised \\
+  \bottomrule
+\end{tabularx}
+
+Each activity record includes: user identity, browser, OS,
+device, IP address, timestamp, and a unique request ID for
+traceability.
+
+% ────────────────────────────────────────────────────────────────
+\subsection{Business Rules}
+
+\begin{itemize}[leftmargin=18pt]
+  \item Only the user assigned to the current active level
+        can approve or reject.
+  \item Approval is \textbf{strictly sequential} --- Level~2
+        cannot act until Level~1 approves.
+  \item A rejection at \textbf{any} level rejects the entire
+        document.
+  \item Rejected documents can be revised and resubmitted,
+        restarting the approval chain from Level~1.
+  \item Skipped levels do not block the approval flow.
+  \item The Approval Purpose configuration determines which
+        levels are active; this cannot be changed after
+        document creation.
+  \item All approval actions are immutable audit records.
+\end{itemize}
+
+\begin{ugTip}
+  As a reviewer, check your Approval Center daily. Documents
+  waiting for your approval block the entire chain for all
+  subsequent approvers.
+\end{ugTip}
+
+\newpage

@@ -1,0 +1,56 @@
+% ============================================================================
+% userguide-code.sty
+% ============================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{userguide-code}[2026/04/30 v1.0 User Guide Code Formatting]
+
+\RequirePackage{tikz}
+
+% Role Badge
+\newcommand{\ugRole}[1]{%
+  \tikz[baseline=(role.base)]{%
+    \node[fill=ugSecondary!15, draw=ugSecondary, rounded corners=3pt,
+          inner xsep=5pt, inner ysep=1.5pt,
+          font=\footnotesize\bfseries\color{ugSecondary}] (role) {#1};
+  }%
+}
+
+% Inline Keyboard Key
+\newcommand{\ugKey}[1]{%
+  \tikz[baseline=(key.base)]{%
+    \node[fill=ugMediumBg, draw=ugBorder, rounded corners=2pt,
+          inner xsep=4pt, inner ysep=1pt,
+          font=\footnotesize\ttfamily] (key) {#1};
+  }%
+}
+
+% Menu Path
+\newcommand{\ugMenu}[1]{%
+  {\small\sffamily\color{ugPrimary}\textbf{#1}}%
+}
+
+% Field Reference
+\newcommand{\ugField}[1]{%
+  {\small\sffamily\color{ugSecondary}\textit{#1}}%
+}
+
+% UI Button
+\newcommand{\ugButton}[1]{%
+  \tikz[baseline=(btn.base)]{%
+    \node[fill=ugPrimary, rounded corners=3pt,
+          inner xsep=6pt, inner ysep=2pt,
+          font=\footnotesize\sffamily\bfseries\color{white}] (btn) {#1};
+  }%
+}
+
+% Status Badge
+\newcommand{\ugStatus}[2]{%
+  % #1 = color name   #2 = status text
+  \tikz[baseline=(st.base)]{%
+    \node[fill=#1!15, draw=#1, rounded corners=3pt,
+          inner xsep=5pt, inner ysep=1.5pt,
+          font=\footnotesize\bfseries\color{#1}] (st) {#2};
+  }%
+}
+
+\endinput

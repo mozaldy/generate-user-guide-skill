@@ -1,0 +1,107 @@
+% ============================================================================
+% Core Feature: AI-Powered Intelligence
+% ============================================================================
+\section{AI-Powered Intelligence}
+
+\begin{ugModule}{Overview}
+
+  \textbf{Purpose:}
+  Enable intelligent document search and natural language Q\&A
+  using a Retrieval-Augmented Generation (RAG) system.
+
+  \textbf{Who Can Access:}
+  All authenticated users.
+\end{ugModule}
+
+\subsection{Full-Text Search}
+
+The search bar in the header performs full-text search across:
+
+\begin{itemize}[leftmargin=18pt]
+  \item Document titles
+  \item Tags
+  \item Descriptions
+  \item \textbf{Extracted document content} --- the actual text
+    inside the PDF, extracted at upload time
+\end{itemize}
+
+\subsection{AI Chat Assistant}
+
+The AI Chat feature allows you to ask questions in natural
+language and receive grounded answers with source citations:
+
+\begin{ugSteps}
+  \item Open the \ugMenu{AI Chat} panel.
+  \item Type your question in natural language
+        (e.g., ``What is the procedure for equipment
+        procurement?'').
+  \item The system performs hybrid retrieval (dense + sparse
+        search) across all ingested documents.
+  \item Results are reranked by relevance and passed to a
+        language model.
+  \item You receive an answer with source citations
+        (\texttt{[S1]}, \texttt{[S2]}, etc.) linking to the
+        specific document and passage.
+\end{ugSteps}
+
+\subsection{How Ingestion Works}
+
+When a document is uploaded, the AI Ingest Worker automatically
+processes it:
+
+\begin{enumerate}[leftmargin=18pt]
+  \item \textbf{Parse} --- Docling extracts structured content
+        (text, tables, figures) from the PDF. For scanned
+        documents, OCR (Tesseract) is applied first.
+  \item \textbf{Chunk} --- Content is split into semantic
+        segments with contextual overlap for continuity.
+  \item \textbf{Embed} --- BGE-M3 generates both dense (1024d)
+        and sparse vector representations for each chunk.
+  \item \textbf{Store} --- Vectors are indexed in the Qdrant
+        vector database for fast similarity search.
+\end{enumerate}
+
+This process runs \textbf{asynchronously} via Redis Streams
+and does not block the upload.
+
+\subsection{RAG Pipeline}
+
+When a user asks a question, the system follows this pipeline:
+
+\begin{tabularx}{\textwidth}{@{} c l X @{}}
+  \toprule
+  \textbf{Step} & \textbf{Component}
+    & \textbf{Action} \\
+  \midrule
+  1 & Query Router
+    & Gemini classifies the query as document-related
+      or general conversation \\
+  2 & Hybrid Retriever
+    & Dense + sparse search in Qdrant retrieves
+      the top-$k$ candidate chunks \\
+  3 & Reranker
+    & BGE-Reranker-Base cross-encoder reranks candidates
+      by semantic relevance \\
+  4 & Answer Generator
+    & Gemini~2.5~Flash generates a grounded answer using
+      the reranked passages as context \\
+  5 & Citation Mapper
+    & Source references (\texttt{[S1]}, \texttt{[S2]})
+      are mapped to specific documents and pages \\
+  \bottomrule
+\end{tabularx}
+
+\begin{ugTip}
+  The AI Chat provides source citations with every answer.
+  Always click the source links to verify information
+  against the original document. The AI does not fabricate
+  information when source passages are available.
+\end{ugTip}
+
+\begin{ugWarning}
+  AI answers are generated from document content and should
+  be verified before making decisions. The system is designed
+  to refuse answers when no relevant source material is found.
+\end{ugWarning}
+
+\newpage

@@ -1,0 +1,113 @@
+% ============================================================================
+% userguide-boxes.sty
+% ============================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{userguide-boxes}[2026/04/30 v1.0 User Guide Boxes]
+
+\RequirePackage{tcolorbox}
+\RequirePackage{fontawesome5}
+\tcbuselibrary{skins,breakable}
+
+% Callout Boxes (Note / Tip / Warning / Danger / Info)
+\newtcolorbox{ugNote}[1][Note]{%
+  enhanced, breakable,
+  colback=ugInfo!5, colframe=ugInfo,
+  leftrule=4pt, rightrule=0.5pt, toprule=0.5pt, bottomrule=0.5pt,
+  fonttitle=\bfseries\color{ugInfo},
+  title={\faInfoCircle\hspace{6pt}#1},
+  boxsep=4pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  arc=2pt
+}
+
+\newtcolorbox{ugTip}[1][Tip]{%
+  enhanced, breakable,
+  colback=ugSuccess!5, colframe=ugSuccess,
+  leftrule=4pt, rightrule=0.5pt, toprule=0.5pt, bottomrule=0.5pt,
+  fonttitle=\bfseries\color{ugSuccess},
+  title={\faLightbulb\hspace{6pt}#1},
+  boxsep=4pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  arc=2pt
+}
+
+\newtcolorbox{ugWarning}[1][Warning]{%
+  enhanced, breakable,
+  colback=ugWarning!5, colframe=ugWarning,
+  leftrule=4pt, rightrule=0.5pt, toprule=0.5pt, bottomrule=0.5pt,
+  fonttitle=\bfseries\color{ugWarning},
+  title={\faExclamationTriangle\hspace{6pt}#1},
+  boxsep=4pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  arc=2pt
+}
+
+\newtcolorbox{ugDanger}[1][Danger]{%
+  enhanced, breakable,
+  colback=ugDanger!5, colframe=ugDanger,
+  leftrule=4pt, rightrule=0.5pt, toprule=0.5pt, bottomrule=0.5pt,
+  fonttitle=\bfseries\color{ugDanger},
+  title={\faTimesCircle\hspace{6pt}#1},
+  boxsep=4pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  arc=2pt
+}
+
+\newtcolorbox{ugImportant}[1][Important]{%
+  enhanced, breakable,
+  colback=ugAccent!5, colframe=ugAccent,
+  leftrule=4pt, rightrule=0.5pt, toprule=0.5pt, bottomrule=0.5pt,
+  fonttitle=\bfseries\color{ugAccent},
+  title={\faExclamationCircle\hspace{6pt}#1},
+  boxsep=4pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  arc=2pt
+}
+
+% FAQ Environment
+\newcounter{ugfaq}
+\newcommand{\ugFAQ}[2]{%
+  \stepcounter{ugfaq}%
+  \begin{tcolorbox}[
+    enhanced, breakable,
+    colback=ugLightBg, colframe=ugBorder,
+    leftrule=3pt, rightrule=0.5pt, toprule=0.5pt, bottomrule=0.5pt,
+    fonttitle=\bfseries\color{ugPrimary},
+    title={Q\theugfaq: #1},
+    boxsep=4pt, left=6pt, right=6pt, top=2pt, bottom=4pt,
+    arc=2pt
+  ]
+    \textbf{A:} #2
+  \end{tcolorbox}
+}
+
+% Module Box (for Core Features section)
+\newtcolorbox{ugModule}[1]{%
+  enhanced, breakable,
+  colback=white, colframe=ugPrimary,
+  fonttitle=\large\bfseries\color{white},
+  title={#1},
+  attach boxed title to top left={xshift=4mm, yshift=-2mm},
+  boxed title style={colback=ugPrimary, arc=2pt},
+  boxsep=5pt, left=8pt, right=8pt, top=10pt, bottom=6pt,
+  arc=3pt, boxrule=0.8pt
+}
+
+% Task Card Environment
+\newtcolorbox{ugTask}[1]{%
+  enhanced, breakable,
+  colback=ugLightBg, colframe=ugSecondary,
+  leftrule=4pt, rightrule=0.5pt, toprule=0.5pt, bottomrule=0.5pt,
+  fonttitle=\bfseries\color{ugSecondary},
+  title={\faTasks\hspace{6pt}#1},
+  boxsep=4pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  arc=2pt
+}
+
+% Best Practice Box
+\newtcolorbox{ugBestPractice}[1][Best Practice]{%
+  enhanced, breakable,
+  colback=ugSuccess!3, colframe=ugSuccess!70!black,
+  leftrule=4pt, rightrule=0.5pt, toprule=0.5pt, bottomrule=0.5pt,
+  fonttitle=\bfseries\color{ugSuccess!70!black},
+  title={\faCheckCircle\hspace{6pt}#1},
+  boxsep=4pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+  arc=2pt
+}
+
+\endinput

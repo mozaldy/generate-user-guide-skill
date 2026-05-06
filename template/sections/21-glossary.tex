@@ -1,0 +1,86 @@
+% ============================================================================
+% 13. Glossary
+% ============================================================================
+\section{Glossary}
+
+\ugGlossaryEntry{ACL}{Access Control List --- a set of rules
+  defining which users or roles have permission to access a
+  specific document.}
+\ugGlossaryEntry{Active}{Document status indicating the document
+  is published and accessible to authorized users.}
+\ugGlossaryEntry{Approval Workflow}{A structured process in which
+  documents move through sequential statuses (Draft, Review,
+  Approved, Active, Archived) with required reviewer actions.}
+\ugGlossaryEntry{Archived}{Document status indicating the document
+  has been retired, either manually or by auto-expiry.}
+\ugGlossaryEntry{BGE-M3}{A multi-modal embedding model that
+  generates both dense and sparse vector representations for
+  hybrid search retrieval.}
+\ugGlossaryEntry{Checksum}{A fixed-length hash value (SHA-256)
+  computed from a file's content to verify its integrity.}
+\ugGlossaryEntry{Docling}{A PDF parsing library used to extract
+  structured content (text, tables, figures) from documents.}
+\ugGlossaryEntry{Download Token}{A one-time-use, time-limited
+  signed URL (valid for 30~minutes) that allows anonymous
+  document download without authentication.}
+\ugGlossaryEntry{Draft}{Document status indicating the document
+  is being prepared and has not yet been submitted for review.}
+\ugGlossaryEntry{Full-Text Search}{Search capability that queries
+  the extracted text content inside documents, not just metadata.}
+\ugGlossaryEntry{JWT}{JSON Web Token --- a compact, URL-safe
+  token used for authentication and authorization between
+  services.}
+\ugGlossaryEntry{Keycloak}{An open-source identity and access
+  management solution providing Single Sign-On (SSO) via OpenID
+  Connect (OIDC).}
+\ugGlossaryEntry{Magic Bytes}{The first few bytes of a file
+  that identify its format, used for security validation
+  beyond the file extension.}
+\ugGlossaryEntry{MFA}{Multi-Factor Authentication --- a security
+  mechanism requiring two or more verification methods (e.g.,
+  password + authenticator app).}
+\ugGlossaryEntry{MinIO}{An S3-compatible object storage service
+  used for storing PDF files, thumbnails, and rasterized outputs.}
+\ugGlossaryEntry{OCR}{Optical Character Recognition --- the
+  process of extracting text from scanned or image-based PDFs.}
+\ugGlossaryEntry{OIDC}{OpenID Connect --- an authentication
+  protocol built on OAuth~2.0 used by Keycloak for SSO.}
+\ugGlossaryEntry{Qdrant}{A vector database used for storing
+  and querying document embeddings for semantic search and RAG.}
+\ugGlossaryEntry{RAG}{Retrieval-Augmented Generation --- an AI
+  technique that retrieves relevant document passages and uses
+  them to generate grounded, citation-backed answers.}
+\ugGlossaryEntry{Rasterization}{The process of converting PDF
+  pages from vector format to image format, preventing text
+  selection and copy operations.}
+\ugGlossaryEntry{RBAC}{Role-Based Access Control --- a method
+  of restricting system access based on the roles assigned to
+  individual users (Admin, Manager, Reviewer, Staff).}
+\ugGlossaryEntry{Redis}{An in-memory data store used for caching,
+  rate limiting, and inter-service message streaming via Redis
+  Streams.}
+\ugGlossaryEntry{Rejected}{Document status indicating a reviewer
+  has declined the document, returning it to Draft for revision.}
+\ugGlossaryEntry{Review}{Document status indicating the document
+  has been submitted and is awaiting reviewer action.}
+\ugGlossaryEntry{SHA-256}{Secure Hash Algorithm producing a
+  256-bit hash used for file integrity verification.}
+\ugGlossaryEntry{Share Link}{A reusable public URL for document
+  download with configurable expiry date and download limit.}
+\ugGlossaryEntry{Soft Delete}{A deletion method that marks a
+  record as inactive without physically removing data from the
+  database or storage.}
+\ugGlossaryEntry{SSO}{Single Sign-On --- an authentication
+  scheme allowing users to access multiple applications with
+  a single set of credentials (via Keycloak OIDC).}
+\ugGlossaryEntry{STOMP}{Simple Text Oriented Messaging Protocol
+  --- a WebSocket sub-protocol used for real-time notifications
+  via RabbitMQ.}
+\ugGlossaryEntry{Thumbnail}{An auto-generated preview image
+  derived from the first page of a PDF document, used in grid
+  views and document cards.}
+\ugGlossaryEntry{Watermark}{An embedded overlay on downloaded
+  documents containing the downloader's identity (name, IP,
+  timestamp, browser) for traceability and deterrence.}
+
+\newpage

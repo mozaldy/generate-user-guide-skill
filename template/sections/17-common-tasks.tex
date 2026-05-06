@@ -1,0 +1,317 @@
+% ============================================================================
+% 9. Common Tasks (Task-Based Guides)
+% ============================================================================
+\section{Common Tasks}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Uploading a New Document}
+  \textbf{Objective:} Add a new PDF document to the repository.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Navigate to \ugMenu{Documents > Document List}.
+    \item Click \ugButton{+ Upload Document}.
+    \item Drag and drop a PDF file into the dropzone, or click
+          to browse.
+    \item Complete the required fields: \ugField{Title},
+          \ugField{Document Type}, and \ugField{Unit}.
+    \item Optionally add \ugField{Tags}, \ugField{Description},
+          \ugField{Effective Date}, and \ugField{Expiry Date}.
+    \item Click \ugButton{Upload}.
+  \end{ugSteps}
+
+  \textbf{Expected Outcome:} The document appears in the list
+  with version~1 and status \ugStatus{ugMutedText}{Draft}.
+  A thumbnail and extracted text are generated automatically.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Searching for a Document}
+  \textbf{Objective:} Find a specific document by keyword or
+  content.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Click the \faSearch\ search bar in the header.
+    \item Type a keyword --- the search covers titles, tags,
+          descriptions, and \textbf{extracted document content}.
+    \item Press \ugKey{Enter} to execute the search.
+    \item Use the sidebar filters to narrow results by
+          \ugField{Document Type}, \ugField{Status},
+          \ugField{Unit}, or \ugField{Tags}.
+  \end{ugSteps}
+
+  \textbf{Tip:} Switch between list view (\,\faList\,) and
+  thumbnail grid view (\,\faTh\,) using the toggle in the
+  toolbar.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Submitting a Document for Review}
+  \textbf{Objective:} Move a draft document into the approval
+  pipeline.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Open the document detail page of a
+          \ugStatus{ugMutedText}{Draft} document.
+    \item Review the metadata and attached file for completeness.
+    \item Click \ugButton{Submit for Review}.
+    \item Confirm the action in the dialog.
+  \end{ugSteps}
+
+  \textbf{Expected Outcome:} The document status changes to
+  \ugStatus{ugWarning}{Review} and appears in the
+  \ugRole{Reviewer}'s Approval Center.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Approving or Rejecting a Document}
+  \textbf{Objective:} Complete a review action on a submitted
+  document.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Navigate to \ugMenu{Approval Center}.
+    \item Select a document with \ugStatus{ugWarning}{Review}
+          status.
+    \item Preview the document to review its content.
+    \item Click \ugButton{Approve} or \ugButton{Reject}.
+    \item If rejecting, enter a \textbf{mandatory comment}
+          explaining the reason.
+    \item Confirm the action.
+  \end{ugSteps}
+
+  \textbf{Expected Outcome:} The status changes to
+  \ugStatus{ugInfo}{Approved} or \ugStatus{ugDanger}{Rejected}.
+  A record is added to the document's status history.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Downloading a Document (Watermarked)}
+  \textbf{Objective:} Download a secure, watermarked copy of a
+  document.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Open the document detail page.
+    \item Click \ugButton{Download} for the latest version,
+          or select a specific version from the
+          \ugField{Version} dropdown.
+    \item Wait for rasterization and watermark processing.
+    \item The PDF downloads automatically.
+  \end{ugSteps}
+
+  \textbf{Expected Outcome:} A PDF with image-based pages and
+  embedded watermarks (your name, IP, timestamp, browser) is
+  saved to your download folder.
+
+  \textbf{Tip:} You can download up to 10 copies per document
+  per hour. Subsequent downloads of the same version use a
+  cached result for faster delivery.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Sharing a Document Externally}
+  \textbf{Objective:} Generate a public link or one-time token
+  for an external recipient.
+
+  \textbf{Option A --- Share Link (reusable):}
+  \begin{ugSteps}
+    \item Open the document detail page, then the
+          \ugMenu{Share} tab.
+    \item Click \ugButton{Create Share Link}.
+    \item Set optional \ugField{Expiry Date} and
+          \ugField{Max Downloads}.
+    \item Click \ugButton{Generate} and copy the link.
+  \end{ugSteps}
+
+  \textbf{Option B --- Download Token (one-time):}
+  \begin{ugSteps}
+    \item On the document detail page, click
+          \ugButton{Generate Token}.
+    \item Copy the generated link (valid for 30~minutes,
+          single use only).
+  \end{ugSteps}
+
+  \textbf{Tip:} Use share links for distributing to groups;
+  use download tokens for sending to a single recipient.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Requesting Access to a Restricted Document}
+  \textbf{Objective:} Request permission to view or download a
+  document you do not currently have access to.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Navigate to the restricted document's detail page.
+    \item Click \ugButton{Request Access}.
+    \item Enter a \ugField{Reason} explaining why you need
+          access.
+    \item Click \ugButton{Submit Request}.
+    \item Wait for an \ugRole{Admin} or \ugRole{Manager} to
+          review your request.
+  \end{ugSteps}
+
+  \textbf{Expected Outcome:} Your request is created with
+  \ugStatus{ugWarning}{Pending} status. You will be notified
+  when it is approved or rejected. Only one pending request
+  per document is allowed.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Uploading a Document Revision}
+  \textbf{Objective:} Upload a new version of an existing
+  document while preserving the full history.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Open the document detail page.
+    \item Click \ugButton{Upload Revision}.
+    \item Select the updated PDF file.
+    \item The system creates a new version (e.g., v2, v3, \ldots)
+          with a new checksum and extracted text.
+  \end{ugSteps}
+
+  \textbf{Expected Outcome:} The document's current version
+  number increments. Previous versions remain accessible for
+  preview and download.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Using the AI Chat Assistant}
+  \textbf{Objective:} Ask a natural language question and
+  receive a cited answer from your document repository.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Open the \ugMenu{AI Chat} panel.
+    \item Type your question in plain language
+          (e.g., ``What are the safety requirements for
+          chemical handling?'').
+    \item Press \ugKey{Enter} or click \ugButton{Send}.
+    \item Read the answer, which includes source citations
+          (\texttt{[S1]}, \texttt{[S2]}, etc.).
+    \item Click a citation link to view the original source
+          passage.
+  \end{ugSteps}
+
+  \textbf{Tip:} The AI can summarize documents, answer
+  procedural questions, and compare information across multiple
+  documents. Always verify answers by checking the cited sources.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Managing Master Data (Admin Only)}
+  \textbf{Objective:} Add or update reference data such as
+  document types, statuses, and organizational units.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Navigate to \ugMenu{Settings > Master Data}.
+    \item Select the data category: \ugMenu{Document Types},
+          \ugMenu{Document Statuses}, \ugMenu{Units}, or
+          \ugMenu{ACL Groups}.
+    \item To add: click \ugButton{+ Add New}, fill in the
+          required fields, and click \ugButton{Save}.
+    \item To edit: click the row's edit icon, modify the
+          fields, and click \ugButton{Save}.
+    \item To delete: click the row's delete icon and confirm.
+  \end{ugSteps}
+
+  \textbf{Expected Outcome:} The updated master data is
+  immediately available in dropdown menus across all document
+  forms.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Granting Access to a Document}
+  \textbf{Objective:} Give a specific user or role permission
+  to access a restricted document.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Open the document detail page.
+    \item Navigate to the \ugMenu{Access} tab.
+    \item Click \ugButton{Grant Access}.
+    \item Select \ugField{Access Type}: ``User'' or ``Role''.
+    \item Search for and select the target user or role.
+    \item Optionally set an \ugField{Expires At} date for
+          time-limited access.
+    \item Click \ugButton{Confirm}.
+  \end{ugSteps}
+
+  \textbf{Expected Outcome:} The user or role appears in the
+  access list. If an expiry date was set, access will be
+  automatically revoked after that date.
+
+  \textbf{Tip:} Use role-based grants to give access to entire
+  teams at once, rather than granting to individual users.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Revoking a Share Link}
+  \textbf{Objective:} Disable an active share link to prevent
+  further downloads.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Open the document detail page.
+    \item Navigate to the \ugMenu{Share} tab.
+    \item Find the active share link in the list.
+    \item Click the \ugButton{Revoke} button next to the link.
+    \item Confirm the revocation in the dialog.
+  \end{ugSteps}
+
+  \textbf{Expected Outcome:} The share link is immediately
+  invalidated. Any existing copies of the URL will return a
+  ``Link not found'' error when accessed.
+\end{ugTask}
+
+\vspace{8pt}
+
+% ────────────────────────────────────────────────────────────────
+\begin{ugTask}{Restoring a Deleted Document}
+  \textbf{Objective:} Recover a document that was previously
+  soft-deleted.
+
+  \textbf{Steps:}
+  \begin{ugSteps}
+    \item Navigate to \ugMenu{Documents > Trash}.
+    \item Locate the deleted document using search or filters.
+    \item Click \ugButton{Restore} on the document row.
+    \item Confirm the restoration in the dialog.
+  \end{ugSteps}
+
+  \textbf{Expected Outcome:} The document reappears in the
+  main document list with its original status, versions, and
+  access controls intact.
+
+  \textbf{Tip:} Only \ugRole{Admin} and \ugRole{Manager} users
+  can access the Trash and restore documents.
+\end{ugTask}
+
+\newpage
