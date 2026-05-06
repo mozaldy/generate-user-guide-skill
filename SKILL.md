@@ -291,6 +291,20 @@ Rules:
 3. For each user flow:
    - Navigate to the URL (use real IDs from live data — click through to discover them)
    - `await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {})`
+   - **Loading-guard rule (non-negotiable — do not screenshot a loading state):** after `networkidle`, explicitly wait for all loading indicators to disappear and real content to appear before capturing. Use this pattern:
+     ```js
+     // Hide loading spinners / skeletons
+     await page.waitForFunction(() => {
+       const spinners = document.querySelectorAll(
+         '[class*="spinner"], [class*="skeleton"], [class*="loading"], [aria-busy="true"], [data-loading="true"]'
+       );
+       return [...spinners].every(el => !el.offsetParent);
+     }, { timeout: 10000 }).catch(() => {});
+     // Then confirm at least one meaningful content element is visible
+     // e.g. await page.waitForSelector('table, [role="main"] h1, .card', { state: 'visible', timeout: 10000 }).catch(() => {});
+     ```
+   - If the page uses a skeleton loader that shares no obvious selector, wait for a known content element instead (a table row, a heading, a card) with `waitForSelector(..., { state: 'visible' })`.
+   - Never capture a screenshot if the viewport still shows a blank box, spinning icon, or placeholder skeleton — always verify content is rendered first.
    - **Container-first capture rule (non-negotiable):** capture one container per screenshot — one card, one table, one sidebar block, one modal, or one form section. Never capture a full page just to show a single container.
    - For the sidebar specifically: capture only the sidebar element, not the whole dashboard. The crop should show the sidebar block plus enough header/search/menu context to read it clearly. Center it narrowly in the page.
    - Crop the smallest useful live container. If only one chart/table card is needed, capture only that card.
@@ -303,6 +317,20 @@ Rules:
    - `console.log` each file saved.
 
 When deciding what a container means, read the source code first. Use the component tree, route file, and layout files to identify the real structure and the intended label for each container before writing the explanation. Source code is only for route/structure discovery; it is not a substitute for the browser screenshot.
+
+**Per-screenshot code map (record while capturing).** For every screenshot you save, record a short note tying the file to its source: route path, component file, primary data source (API/DB), key state variables, and any role guard. Save this as `docs/screenshots/_code-map.json` (or markdown) so Step 8 can pull from it instead of re-deriving the mapping. Example entry:
+```json
+{
+  "05-document-list.png": {
+    "route": "app/(app)/documents/page.tsx",
+    "component": "components/document/DocumentTable.tsx",
+    "api": "app/api/documents/route.ts (GET)",
+    "fields": ["title", "version", "status", "owner", "updatedAt"],
+    "statuses": ["draft", "review", "approved", "archived"],
+    "roleGate": "any authenticated user; only Admin sees Delete column"
+  }
+}
+```
 
 Crop helper pattern:
 - Prefer `locator.screenshot()` for a single container, button, card, sidebar, or table.
@@ -429,6 +457,29 @@ Only map labels that have real browser-captured PNGs. If a label has no captured
 ### Step 8 — Write section files
 
 Replace each skeleton in `docs/sections/` with project-specific content. Use the template's own section-by-section structure as the guide, especially where the template already breaks a section into deeper subtopics.
+
+**Codebase-walk rule (non-negotiable — each feature must be explained from real code, not from the screenshot alone):** before writing any feature-module chapter or container description, read the actual source code for that feature. The screenshot shows surface UI; the code shows behavior, validation, side effects, and edge cases. Without the codebase walk the prose collapses to "this card shows data" filler.
+
+For each feature module / screen / container, locate and read:
+- the **route/page file** (`app/<route>/page.tsx`, `pages/<route>.tsx`, `src/app/<route>/`) — entry point, layout, what data it requests
+- the **component file(s)** rendered inside — props, state, conditional rendering, empty states, error states
+- the **form schema / validation** — Zod / Yup / react-hook-form rules: required fields, min/max, regex, custom validators
+- the **API route or server action** invoked on submit / load — `app/api/<x>/route.ts`, `server/<x>.ts`, tRPC procedure, GraphQL resolver
+- the **data layer** — Prisma model, SQL query, ORM call — what fields exist, what defaults, what relations
+- the **permission / role check** — middleware, `auth()`, RBAC guard — who can see this, who can act
+- the **side effects** — emails sent, audit log entries, webhooks fired, notifications triggered, files written
+- any **business-rule comments** or constants (`STATUS = ['draft','approved',...]`, `MAX_UPLOAD_SIZE`, retry counts, expiry windows)
+
+For every feature chapter, the prose must reflect what the code actually does:
+- list the **exact fields** the form sends, not paraphrased ones
+- list the **exact statuses / roles / states** the code defines, not invented ones
+- describe the **real outcome** of clicking each button (POST to which endpoint, which DB write, which redirect, which toast)
+- describe **error states** the code can produce (validation failures, 401/403/409/422 responses, server errors) and what the user sees for each
+- describe **empty states** and loading states the component renders
+- describe **permission gates** — what each role can / cannot do on this screen, sourced from the auth check
+- describe **side effects** that are not visible in the screenshot (audit log written, email sent, file moved, webhook fired)
+
+When the codebase walk reveals behavior the screenshot cannot show, write a short subsection or `\begin{ugNote}` block explaining it. A feature chapter that only restates what the screenshot shows is a stub — recapture the source-code findings in prose before shipping.
 
 **No-stub rule (non-negotiable):** every section file must ship with real, project-specific content. Do not output a section that contains only a heading, an empty table header, a bullet list of bare terms, or a placeholder note. The previous run of this skill failed because Troubleshooting shipped an empty `ugErrorTable` header, Glossary shipped term names without definitions, and Common Tasks were collapsed to one-line steps. Every section must look as substantive as the corresponding section in the bundled example template.
 
