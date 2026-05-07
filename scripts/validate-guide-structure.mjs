@@ -4,6 +4,7 @@ import path from "node:path";
 
 const docsDir = process.argv[2] || "docs";
 const sectionsDir = path.join(docsDir, "sections");
+const allowDraftProgress = process.env.UG_ALLOW_DRAFT_PROGRESS === "1";
 
 let failed = false;
 
@@ -172,13 +173,16 @@ if (!fs.existsSync(progressPath)) {
     if (!Array.isArray(progress.features) || !progress.features.length) {
       error("docs/guide-progress.json must contain a non-empty features array.");
     } else {
-      const notApproved = progress.features.filter((feature) =>
-        feature.status !== "approved" && feature.status !== "skipped"
-      );
+      const allowedStatuses = allowDraftProgress
+        ? new Set(["drafted", "reviewed", "approved", "skipped"])
+        : new Set(["approved", "skipped"]);
+      const notApproved = progress.features.filter((feature) => !allowedStatuses.has(feature.status));
       if (notApproved.length) {
-        error(`features/user flows not approved: ${notApproved.map((feature) => feature.id || feature.title).join(", ")}`);
+        error(`features/user flows not ${allowDraftProgress ? "ready for draft review" : "approved"}: ${notApproved.map((feature) => feature.id || feature.title).join(", ")}`);
       } else {
-        ok("guide review progress is approved or skipped for every feature/user flow.");
+        ok(allowDraftProgress
+          ? "guide review progress is drafted/reviewed/approved/skipped for every feature/user flow."
+          : "guide review progress is approved or skipped for every feature/user flow.");
       }
     }
   } catch (err) {

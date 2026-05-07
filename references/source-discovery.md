@@ -1,6 +1,6 @@
 # Source Discovery
 
-Read source code before writing guide content or capturing screenshots. Source discovery determines the feature list, user-flow order, scenario coverage, and exact UI labels.
+Read source code before writing guide content or capturing screenshots. Source discovery determines the full-app feature list, user-flow order, scenario coverage, and exact UI labels. The user-provided route is the entry/start route by default, not the documentation boundary.
 
 ## Search Targets
 
@@ -15,8 +15,9 @@ Use `rg` first. Prefer source truth over browser guessing for route structure, l
 ## Required Inventory
 
 Create `docs/guide-inventory.md` with:
-- app name, target route, base URL, date, role used for capture
-- complete route/page list under `TARGET_ROUTE`
+- app name, full-app scope assumption, entry/start route, base URL, date, role used for capture
+- complete public, protected, dynamic, redirect, and error route/page list for the app
+- authentication flow from the entry route through the authenticated shell
 - navigation hierarchy: sidebar groups, tabs, breadcrumbs, top-bar actions
 - user flows, numbered in documentation order
 - feature modules, numbered in chapter order from chapter 5 onward
@@ -35,9 +36,10 @@ Create `docs/guide-progress.json` before writing feature chapters. Use this shap
 ```json
 {
   "version": 1,
-  "targetRoute": "/document",
+  "scope": "entire-app",
+  "entryRoute": "/auth",
   "baseUrl": "https://example.com",
-  "reviewPolicy": "draft-and-screenshots",
+  "reviewPolicy": "one-feature-at-a-time",
   "features": [
     {
       "id": "login",
@@ -54,6 +56,8 @@ Create `docs/guide-progress.json` before writing feature chapters. Use this shap
 
 Valid statuses are `pending`, `drafted`, `reviewed`, `approved`, and `skipped`. Use `skipped` only with a reason.
 
+Do not set `status: "approved"` until the user explicitly approves that feature/user flow. After drafting and capturing a feature, set `status: "drafted"` and stop for review.
+
 ## Feature Grouping
 
 Group routes into feature modules by user intent, not by implementation folder alone. A feature module should usually map to one major sidebar entry or workflow family.
@@ -64,6 +68,8 @@ Use these defaults:
 - CRUD for one resource is usually one feature module, with list/create/update/detail/upload/delete subsections.
 - Approval and access-request workflows deserve separate modules when they have distinct roles, statuses, or screens.
 - Master-data submodules can be separate chapters when users manage them independently.
+
+If the entry route is `/auth`, `/login`, `/signin`, `/callback`, or `/select-role`, still discover the entire authenticated application after login. Document login as Getting Started or an authentication flow, then continue with the protected app modules.
 
 ## Exhaustive Flow Checklist
 
@@ -90,4 +96,4 @@ Login must cover at minimum:
 
 ## Before Proceeding
 
-Do not start writing feature sections until `docs/guide-inventory.md` contains a numbered user-flow list and feature-module list. If source code reveals multiple plausible feature groupings, choose the one that matches the navigation users see in the live app and record that assumption.
+Do not start writing feature sections until `docs/guide-inventory.md` contains a numbered user-flow list and full-app feature-module list. Stop after the inventory/plan checkpoint and ask the user to approve the module order and first feature, unless the user explicitly asked to skip checkpoints. If source code reveals multiple plausible feature groupings, choose the one that matches the navigation users see in the live app and record that assumption.

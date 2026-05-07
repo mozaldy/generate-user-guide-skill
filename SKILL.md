@@ -5,14 +5,14 @@ description: Generate end-user guides, user manuals, and documentation PDFs for 
 
 # generate-user-guide
 
-Generate an end-user guide PDF from a real web app. Default to a multi-step, review-gated workflow: discover all features and user flows from source code first, then write and capture one feature/user flow at a time, ask for feedback, and continue only after approval.
+Generate an end-user guide PDF from a real web app. Default scope is the **entire app**, not only the URL provided by the user. The supplied route is the entry/login/start route for discovery and capture unless the user explicitly says to document only that route. Always use a multi-step, review-gated workflow: discover all features and user flows from source code first, create the full-app module plan, then write and capture one feature/user flow at a time, ask for feedback, and continue only after approval.
 
 ## Intake
 
 Ask only for missing values.
 
 Required:
-- `TARGET_ROUTE` - section of the app to document, for example `/admin`
+- `TARGET_ROUTE` - entry/start route used to access the app, for example `/auth`, `/login`, or `/admin`. This is **not** the documentation scope by default.
 - `BASE_URL` - live deployment URL, for example `https://myapp.com`
 - `EMAIL` - login email or username
 - `PASSWORD` - login password
@@ -21,6 +21,7 @@ Optional:
 - `TEMPLATE_SOURCE` - template folder, file, or ZIP/archive
 - `APP_NAME` - display name, default: infer from project
 - `COMPANY` - company name, default: blank
+- `SCOPE` - default: `entire-app`. Use `single-route` only when the user explicitly asks to document just the provided route.
 
 Template rule:
 - If `TEMPLATE_SOURCE` is provided, use it.
@@ -28,6 +29,44 @@ Template rule:
 - If a ZIP/archive is provided, unpack it and normalize it into the same working shape.
 
 Derive `APP_SLUG` by lowercasing and hyphenating `APP_NAME`. Name outputs `docs/user-guide-<APP_SLUG>.tex` and `docs/user-guide-<APP_SLUG>.pdf`.
+
+## Scope Rule (Non-Negotiable)
+
+When a user provides a login/auth/start URL plus credentials, assume they want a user guide for the entire authenticated application. Do **not** shrink the guide to the login route just because the URL path is `/auth`, `/login`, `/signin`, `/callback`, or `/select-role`.
+
+Treat the route as:
+- the place to begin browser login/capture
+- an authentication flow to include in Getting Started
+- a source-code anchor for discovering protected routes
+
+Only produce a single-route guide when the user explicitly says one of:
+- "only document this route"
+- "login flow only"
+- "single page guide"
+- "document `/x` only"
+
+If the scope is ambiguous, record the assumption in `docs/guide-inventory.md` as: "Scope: entire authenticated app; entry route: <TARGET_ROUTE>." Do not ask a clarifying question unless proceeding would risk using the wrong credentials, role, or production side effects.
+
+## Review-Gated Iteration (Default Execution Model)
+
+Do not attempt to complete the whole app in one uninterrupted generation pass unless the user explicitly says to skip checkpoints. The default workflow is:
+
+1. Discover the full app.
+2. Produce the full module/user-flow plan and `docs/guide-inventory.md`.
+3. Set up the template, metadata, logo, colors, and initial shell sections.
+4. Draft and capture exactly one feature module or user flow.
+5. Compile or provide a focused review packet for that feature.
+6. Ask the user for feedback/approval.
+7. Continue to the next feature only after approval.
+
+At the first checkpoint, report:
+- the full app module list in intended chapter order
+- the numbered user-flow list
+- the first feature/user flow selected for drafting
+- what screenshots were captured or will be captured
+- any access/role limitations discovered
+
+Set `docs/guide-progress.json` feature statuses as `pending`, `drafted`, `reviewed`, `approved`, or `skipped`. Do not mark a feature `approved` yourself just to satisfy validation. Mark it `drafted` after writing/capturing it, then ask the user to approve or request changes.
 
 ## Load References
 
@@ -40,6 +79,7 @@ Read these files as needed, not all at once:
 Bundled validators:
 - `scripts/screenshot-qa.mjs <docs-dir>` checks screenshot dimensions, loading-state metadata, crop categories, and `screenshots/manifest.json`.
 - `scripts/validate-guide-structure.mjs <docs-dir>` checks guide structure, stubs, UI macro wrapping, feature review progress, and common LaTeX content failures.
+- For draft review packets, run `UG_ALLOW_DRAFT_PROGRESS=1 scripts/validate-guide-structure.mjs <docs-dir>` so `drafted`/`reviewed` features can validate before user approval. For final delivery, omit the flag so only `approved` or `skipped` features pass.
 
 ## Workflow
 
@@ -55,10 +95,16 @@ If the template source is ambiguous, ask for one of these:
 - file location where the template is stored
 
 ### Step 1 — Explore the source / app
-Spawn an Explore subagent targeting `TARGET_ROUTE`. Search in `app/`, `pages/`, `src/app/`, `src/pages/`.
+Spawn an Explore subagent for full-app discovery. `TARGET_ROUTE` is the entry/start route, not the feature boundary unless `SCOPE=single-route`.
+
+Search all likely routing and module locations, including:
+- `app/`, `pages/`, `src/app/`, `src/pages/`
+- `src/routing/`, `src/routes/`, `src/router/`
+- `src/modules/`, `src/features/`, `src/components/layout/`, `src/components/sidebar/`
+- constants, i18n messages, permission guards, menu builders, and route helper files
 
 Return:
-- every route/page under the target
+- every public route, protected route, dynamic route, redirect route, and error route in the app
 - what each page does (list, detail, form, modal, upload, search, etc.)
 - navigation structure (sidebar, breadcrumbs, tabs)
 - all interactive actions: add, edit, delete, search, filter, upload
@@ -66,9 +112,11 @@ Return:
 - forms that change fields based on a type/category selection — list each variant separately
 - any domain-specific terms worth defining in a glossary
 - anything that commonly confuses new users (for FAQ + troubleshooting)
-- the full **module list** of the target app — group routes/pages into named feature modules. This list drives the chapter-5+ feature-file split.
+- the full **module list** of the app — group routes/pages into named feature modules. This list drives the chapter-5+ feature-file split.
 
 Produce a numbered list of user flows AND a numbered list of feature modules before proceeding.
+
+Before writing any feature chapter, create `docs/guide-inventory.md` and `docs/guide-progress.json`. The inventory must include the full app scope assumption, the entry route, all discovered modules, and the intended chapter order. Stop at this checkpoint and ask the user to approve the plan before drafting the first feature unless the user explicitly requested no checkpoints.
 
 ---
 
@@ -114,7 +162,7 @@ cp -R "$TEMPLATE_ROOT/img"             docs/
 ```
 
 After copy:
-- Open `docs/user-guide-<APP_SLUG>.tex` and update the `\input{sections/...}` list so it matches the **module list discovered in Step 1**, not the template's example modules. Remove module file inputs that don't apply, add new ones for modules the example template doesn't cover, and **renumber the trailing chapters (Common Tasks through Appendix) so they continue sequentially after the last feature module**.
+- Open `docs/user-guide-<APP_SLUG>.tex` and update the `\input{sections/...}` list so it matches the **full-app module list discovered in Step 1**, not the entry route and not the template's example modules. Remove module file inputs that don't apply, add new ones for modules the example template doesn't cover, and **renumber the trailing chapters (Common Tasks through Appendix) so they continue sequentially after the last feature module**.
 - For each new module file, copy one of the existing Insight Doc modules (e.g. `06-versioning.tex` is a good short skeleton — 78 lines, 4 subsections; `05-document-management.tex` is a good long skeleton — 632 lines) and rewrite it for the target app.
 - Rename the trailing files to keep numbering contiguous. Examples:
   - 1 feature module → `05-<feature>.tex`, then `06-common-tasks.tex` … `11-appendix.tex` (11 numbered chapters total).
@@ -217,7 +265,8 @@ Write `scripts/capture-screenshots.mjs` and use real browser captures for every 
 Rules:
 1. Use Chromium/Playwright for the actual screenshot capture. The browser may be driven by the Hermes browser tool or by Playwright in a script, but the final image must come from the live UI.
 2. Login: navigate to sign-in route → fill EMAIL/PASSWORD → submit → wait for redirect.
-3. For each user flow:
+3. For the current review batch, capture only the selected user flow/feature module plus any shared shell screenshots needed to understand it. Do not try to capture every app module in one pass unless the user explicitly approved an all-at-once run.
+4. For each user flow:
    - Navigate to the URL (use real IDs from live data — click through to discover them)
    - `await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {})`
    - **Loading-guard rule (non-negotiable — do not screenshot a loading state):** after `networkidle`, explicitly wait for all loading indicators to disappear and real content to appear before capturing. Use this pattern:
@@ -388,7 +437,9 @@ Only map labels that have real browser-captured PNGs. If a label has no captured
 
 ### Step 8 — Write section files
 
-Replace each skeleton in `docs/sections/` with project-specific content. Use the template's own section-by-section structure as the guide, especially where the template already breaks a section into deeper subtopics.
+Replace each skeleton in `docs/sections/` with project-specific content incrementally. Write shared shell sections first (`00`–`04`), then write one feature-module chapter per approved iteration. Use the template's own section-by-section structure as the guide, especially where the template already breaks a section into deeper subtopics.
+
+**Iteration rule (non-negotiable):** in the first implementation pass after discovery, write only the shared chapters plus the first selected feature/user-flow chapter. Leave later feature files as pending only if they are not included in the current compiled review packet, or include a clear planned file list without compiling the final full guide. Do not ship a final PDF that silently omits discovered modules. For final compilation, every discovered module must have a real chapter or be explicitly marked `skipped` with a reason approved by the user.
 
 **Codebase-walk rule (non-negotiable — each feature must be explained from real code, not from the screenshot alone):** before writing any feature-module chapter or container description, read the actual source code for that feature. The screenshot shows surface UI; the code shows behavior, validation, side effects, and edge cases. Without the codebase walk the prose collapses to "this card shows data" filler.
 
