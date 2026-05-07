@@ -2,9 +2,11 @@
 % userguide-code.sty
 % ============================================================================
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{userguide-code}[2026/04/30 v1.0 User Guide Code Formatting]
+\ProvidesPackage{userguide-code}[2026/04/30 v1.1 User Guide Code Formatting]
 
 \RequirePackage{tikz}
+\RequirePackage{graphicx}
+\RequirePackage{etoolbox}
 
 % Role Badge
 \newcommand{\ugRole}[1]{%
@@ -24,24 +26,54 @@
   }%
 }
 
-% Menu Path
-\newcommand{\ugMenu}[1]{%
+% ---------------------------------------------------------------------------
+% Inline UI element references.
+%
+% Authoring rule: prose must reference UI controls via \ugButton{Label},
+% \ugField{Label}, \ugMenu{Label}. The default rendering is the styled
+% pill / colored text below (the *Orig versions). When a generated
+% docs/ui-overrides.tex is present, it \renewcommand's \ugButton /
+% \ugField / \ugMenu to look up a captured PNG by label and call
+% \ugElemImg / \ugElemImgField / \ugElemImgMenu with the image path,
+% falling through to the *Orig macros when no PNG is mapped.
+% ---------------------------------------------------------------------------
+
+% Original styled renderings (always available as fallback targets)
+\newcommand{\ugMenuOrig}[1]{%
   {\small\sffamily\color{ugPrimary}\textbf{#1}}%
 }
 
-% Field Reference
-\newcommand{\ugField}[1]{%
+\newcommand{\ugFieldOrig}[1]{%
   {\small\sffamily\color{ugSecondary}\textit{#1}}%
 }
 
-% UI Button
-\newcommand{\ugButton}[1]{%
+\newcommand{\ugButtonOrig}[1]{%
   \tikz[baseline=(btn.base)]{%
     \node[fill=ugPrimary, rounded corners=3pt,
           inner xsep=6pt, inner ysep=2pt,
           font=\footnotesize\sffamily\bfseries\color{white}] (btn) {#1};
   }%
 }
+
+% Inline image macros used by ui-overrides.tex.
+% Heights are matched to surrounding text x-height; fields are taller
+% because input rows are taller in real UIs.
+\newcommand{\ugElemImg}[1]{%
+  \raisebox{-0.18\height}{\includegraphics[height=1.05em]{#1}}%
+}
+\newcommand{\ugElemImgField}[1]{%
+  \raisebox{-0.32\height}{\includegraphics[height=1.8em]{#1}}%
+}
+\newcommand{\ugElemImgMenu}[1]{%
+  \raisebox{-0.18\height}{\includegraphics[height=1.05em]{#1}}%
+}
+
+% Public macros — default to the *Orig fallback. ui-overrides.tex
+% \renewcommand's these to dispatch on label and call \ugElemImg* when
+% a captured PNG exists.
+\newcommand{\ugMenu}[1]{\ugMenuOrig{#1}}
+\newcommand{\ugField}[1]{\ugFieldOrig{#1}}
+\newcommand{\ugButton}[1]{\ugButtonOrig{#1}}
 
 % Status Badge
 \newcommand{\ugStatus}[2]{%
