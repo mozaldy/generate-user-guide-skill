@@ -22,6 +22,7 @@ Optional:
 - `APP_NAME` - display name, default: infer from project
 - `COMPANY` - company name, default: blank
 - `SCOPE` - default: `entire-app`. Use `single-route` only when the user explicitly asks to document just the provided route.
+- `READ_ONLY_MODE` - default `true`. When `true` (default), the skill will never click buttons that mutate data (Save, Submit, Create, Delete, Approve, Upload, Send, Confirm, Publish, Archive, etc.) — see Read-Only Mode rule below and Step 5. Set `false` only when the user has explicitly confirmed the target environment is non-production AND that it is acceptable for the agent to create / modify / delete real records during capture.
 
 Template rule:
 - If `TEMPLATE_SOURCE` is provided, use it.
@@ -46,6 +47,48 @@ Only produce a single-route guide when the user explicitly says one of:
 - "document `/x` only"
 
 If the scope is ambiguous, record the assumption in `docs/guide-inventory.md` as: "Scope: entire authenticated app; entry route: <TARGET_ROUTE>." Do not ask a clarifying question unless proceeding would risk using the wrong credentials, role, or production side effects.
+
+## Read-Only Mode (Non-Negotiable when `READ_ONLY_MODE=true`)
+
+This skill captures documentation. It is **not** a test runner and must **never** mutate data on the target system. Treat every capture session as if running against production with real users' data.
+
+**Forbidden actions** — never click, never trigger, never submit:
+- Save / Save Changes / Save & Continue
+- Submit / Send / Post
+- Create / Add / New (only the **trigger** to open the modal — never the final Create button inside)
+- Update / Edit (only navigate to the edit screen — never click the final Update)
+- Delete / Remove / Trash / Archive / Move to Bin
+- Approve / Reject / Sign / Authorize
+- Upload / Import / Choose File (do not attach a real file)
+- Publish / Unpublish / Activate / Deactivate
+- Duplicate / Clone / Restore
+- Confirm (in any destructive confirmation dialog)
+- Pressing `Enter` inside a form input (submits the form)
+
+**Allowed actions:**
+- Navigate (URL, sidebar links, breadcrumbs, tabs, pagination)
+- Hover / focus / scroll
+- Open a modal by clicking its **trigger button** (e.g. "+ New Document") — then screenshot the empty modal — then close with `Escape` or the `Cancel` button. Never click the final commit button inside.
+- Fill form inputs with **dummy text** the user will never see — only to demonstrate the populated state for the screenshot — then close the form with `Escape` / `Cancel`. Do **not** type into a search/filter that auto-submits and mutates state.
+- Click navigation-only buttons (sidebar items, "View details", "Open", "Expand", view-mode toggles, sort headers, filter dropdowns that do not auto-submit).
+- Login submit (sign-in form) — this is the only allowed form submission.
+
+**Capturing post-mutation states (success toasts, "Created" badges, populated tables) without mutating:**
+- Use **pre-existing records** in the system. Navigate to a record that already shows the desired status, screenshot it.
+- If no pre-existing record demonstrates a state, **skip that screenshot** and document the gap in `docs/guide-inventory.md` and the final report.
+- Do NOT create a fresh record just to capture a success state.
+- If the user wants those captures, they must seed demo data themselves OR explicitly set `READ_ONLY_MODE=false` after confirming the environment is non-production.
+
+**Codebase changes:** The skill reads source files for discovery (Step 1, Step 8 codebase walk) but **never** edits, creates, or deletes files outside `docs/` and the skill's own `scripts/` scratch directory. Do not modify the target project's code.
+
+**Pre-flight confirmation prompt (mandatory when `READ_ONLY_MODE=true`):** before running any capture script, print to the user:
+```
+READ-ONLY MODE: ON. Skill will navigate and screenshot only. No data will be created, modified, or deleted.
+Forbidden buttons: Save, Submit, Create, Delete, Approve, Upload, Send, Confirm, Publish, Archive.
+Allowed: navigate, hover, open modals → screenshot → Escape, login submit.
+```
+
+**When `READ_ONLY_MODE=false`** (only after explicit user opt-in confirming non-prod env): the agent may submit forms and create test records, but must clean up after itself when possible (delete what it created), and must print a warning before each mutating click.
 
 ## Review-Gated Iteration (Default Execution Model)
 
@@ -262,9 +305,11 @@ If `culori` is not installed: `npm install --no-save culori`. Or hand-roll a con
 
 Write `scripts/capture-screenshots.mjs` and use real browser captures for every page/state.
 
+**READ-ONLY enforcement (see Read-Only Mode section above):** the capture script must not click Save / Submit / Create / Update / Delete / Approve / Upload / Send / Confirm / Publish / Archive. Modals: open trigger → screenshot → `Escape` / `Cancel`. Login submit is the only allowed form submission. For success/post-mutation states, navigate to pre-existing records instead of creating new ones.
+
 Rules:
 1. Use Chromium/Playwright for the actual screenshot capture. The browser may be driven by the Hermes browser tool or by Playwright in a script, but the final image must come from the live UI.
-2. Login: navigate to sign-in route → fill EMAIL/PASSWORD → submit → wait for redirect.
+2. Login: navigate to sign-in route → fill EMAIL/PASSWORD → submit → wait for redirect. (Login submit is the only form submission allowed in read-only mode.)
 3. For the current review batch, capture only the selected user flow/feature module plus any shared shell screenshots needed to understand it. Do not try to capture every app module in one pass unless the user explicitly approved an all-at-once run.
 4. For each user flow:
    - Navigate to the URL (use real IDs from live data — click through to discover them)
@@ -637,6 +682,8 @@ Before declaring success, open the compiled PDF (or grep the section files) and 
 - [ ] No garbled text (e.g. `FSdb...` letter-scramble) visible in any page. If found: the `\ugScreenshot` path at that location points to a PNG that does not exist — fix the path or recapture, then recompile.
 - [ ] Each dashboard container is captured separately and explained with Purpose / What it means / Step-by-step / Expected result, not a generic "this card shows data" sentence.
 - [ ] Every inline `\ugButton`, `\ugField`, `\ugMenu` uses the exact UI label string from the source code.
+- [ ] **Read-only verification** — when `READ_ONLY_MODE=true`, confirm the capture script(s) contain zero clicks on Save / Submit / Create / Update / Delete / Approve / Reject / Upload / Send / Confirm / Publish / Archive buttons (grep `scripts/capture-screenshots.mjs` and `scripts/capture-ui-elements.mjs` for those words). The only allowed form submission is the login form. Modals must be closed with `Escape` or `Cancel`, never with the commit button. If any forbidden click is present, remove it and recapture.
+- [ ] **No code mutations** — confirm no files were created, modified, or deleted outside `docs/` and `scripts/` (the skill's own scratch space). The target project's source code must remain untouched.
 
 If any check fails, fix the underlying file and recompile. Do not ship a guide with known stub sections.
 
