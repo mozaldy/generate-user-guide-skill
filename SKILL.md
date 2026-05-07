@@ -1,116 +1,45 @@
+---
+name: generate-user-guide-skill
+description: Generate end-user guides, user manuals, and documentation PDFs for web apps from a live route, credentials, source-code feature discovery, browser screenshots, and a LaTeX template. Use when Codex is asked to create a user guide/manual PDF, document a web app UI workflow, run /generate-user-guide, or iteratively document one feature/user flow at a time with review checkpoints; not for API docs, code docs, READMEs, or developer-facing documentation.
+---
+
 # generate-user-guide
 
-## When to use
-Invoke when user asks to generate a user guide, user manual, or documentation PDF for a web app.
-Also invoke on `/generate-user-guide`.
+Generate an end-user guide PDF from a real web app. Default to a multi-step, review-gated workflow: discover all features and user flows from source code first, then write and capture one feature/user flow at a time, ask for feedback, and continue only after approval.
 
-Do NOT invoke for: API docs, code docs, README files, or developer-facing docs.
+## Intake
 
----
+Ask only for missing values.
 
-## Arguments
-
-Use this intake order. Ask only for missing items.
-
-Required from user:
-- `TARGET_ROUTE` — section of the app to document, for example `/admin`
-- `BASE_URL` — live deployment URL, for example `https://myapp.com`
-- `EMAIL` — login email
-- `PASSWORD` — login password
-
-Template input:
-- `TEMPLATE_SOURCE` — template folder, template file, or ZIP/archive path
+Required:
+- `TARGET_ROUTE` - section of the app to document, for example `/admin`
+- `BASE_URL` - live deployment URL, for example `https://myapp.com`
+- `EMAIL` - login email or username
+- `PASSWORD` - login password
 
 Optional:
-- `APP_NAME` — display name for the app, default: infer from project
-- `COMPANY` — company name, default: blank
+- `TEMPLATE_SOURCE` - template folder, file, or ZIP/archive
+- `APP_NAME` - display name, default: infer from project
+- `COMPANY` - company name, default: blank
 
 Template rule:
-- If the user gives `TEMPLATE_SOURCE`, use it.
-- If the user does not answer about the template, use the bundled fallback template at `/generate-user-guide-skill/template`.
-- If the user asks where the template is stored and gives no other location, answer with the fallback path and proceed with that source.
+- If `TEMPLATE_SOURCE` is provided, use it.
+- If it is blank, use this skill's bundled fallback template at `template/`.
+- If a ZIP/archive is provided, unpack it and normalize it into the same working shape.
 
-Derive `APP_SLUG` by lowercasing and hyphenating `APP_NAME` (for example, `Adibasa` → `adibasa`).
-The working `.tex` and final `.pdf` are both named `user-guide-<APP_SLUG>`.
+Derive `APP_SLUG` by lowercasing and hyphenating `APP_NAME`. Name outputs `docs/user-guide-<APP_SLUG>.tex` and `docs/user-guide-<APP_SLUG>.pdf`.
 
-Copy-ready intake prompt:
-- Target route:
-- Base URL:
-- Email:
-- Password:
-- Template source: (optional; if blank, use the bundled fallback)
-- App name: (optional)
-- Company: (optional)
+## Load References
 
----
+Read these files as needed, not all at once:
+- `references/source-discovery.md` before planning content or asking feature-scope questions.
+- `references/screenshot-capture.md` before writing or running Playwright capture scripts.
+- `references/section-writing.md` before editing `docs/sections/*.tex` or preparing review packets.
+- `references/validation.md` before compiling, self-reviewing, or reporting completion.
 
-## Template location
-
-Default fallback template for this skill repo:
-
-```text
-/generate-user-guide-skill/template/
-```
-
-Supported template sources:
-- a template directory containing `userguide-example.tex`, `latex/`, `sections/`, and `img/`
-- a ZIP/archive that can be unpacked into a template directory
-- a template bundle file or folder the user points to explicitly
-
-Canonical template contents to mirror:
-- `userguide-example.tex`
-- `latex/userguide.sty`
-- `latex/userguide-boxes.sty`
-- `latex/userguide-code.sty`
-- `latex/userguide-colors.sty`
-- `latex/userguide-layout.sty`
-- `latex/userguide-lists.sty`
-- `latex/userguide-tables.sty`
-- `latex/userguide-titlepage.sty`
-- `latex/userguide-typography.sty`
-- `sections/00-metadata.tex` (config: app name, company, version, logo, cover)
-- `sections/00-document-control.tex` (unnumbered preamble, rendered before TOC)
-- `sections/01-introduction.tex` (chapter 1)
-- `sections/02-system-overview.tex` (chapter 2)
-- `sections/03-getting-started.tex` (chapter 3)
-- `sections/04-ui-overview.tex` (chapter 4)
-- `sections/05-<feature>.tex` … `NN-<feature>.tex` — one file per major feature/module of the target app, numbered sequentially starting at 5 (mandatory split — see below). The bundled reference uses chapters 5–16 for 12 modules.
-- `sections/<N+1>-common-tasks.tex` (after the last feature module)
-- `sections/<N+2>-troubleshooting.tex`
-- `sections/<N+3>-faq.tex`
-- `sections/<N+4>-best-practices.tex`
-- `sections/<N+5>-glossary.tex`
-- `sections/<N+6>-appendix.tex`
-
-For the bundled 12-module reference: `17-common-tasks.tex` … `22-appendix.tex`.
-- `img/` — logo and cover assets
-- `Makefile`, `build.ps1`, `build.bat` — wrappers if present in the template
-
-Important template conventions:
-- The bundled template is the **source of truth**. It compiles to a 22-chapter reference PDF (`userguide-template/userguide-template/build/userguide-example.pdf`) — Document Control + 22 numbered chapters: Introduction (1), System Overview (2), Getting Started (3), UI Overview (4), then 12 per-feature module chapters (5–16), Common Tasks (17), Troubleshooting (18), FAQ (19), Best Practices (20), Glossary (21), Appendix (22). Use this PDF as the **depth and structure target**.
-- All section files ship with real Insight Doc content. When generating a guide for a different app, **rewrite every section file end-to-end** with the target app's content — keep the same chapter ordering, same subsection breakdown, same `\begin{ugModule}{Overview}` / `\begin{ugTask}` / `\begin{ugFAQ}` / `\begin{ugBestPractice}[Title]` / `tabularx` patterns, and the same depth as the reference. **Never ship a section with a bare stub, an empty table, or a single-line "TBD" body.**
-- The feature-module cluster (chapters 5 … N) is the source of truth for feature coverage. Mirror the target app's real module list into separate `NN-<feature>.tex` files starting at `05-` and list each one in `userguide-example.tex`. **One file per feature module is mandatory** — never collapse multiple features into a single chapter. Minimum is one feature module file (chapter 5); the bundled example uses 12 (chapters 5–16: `05-document-management.tex` through `16-lifecycle-management.tex`).
-- After the last feature chapter, the trailing chapters continue sequentially: Common Tasks, Troubleshooting, FAQ, Best Practices, Glossary, Appendix. For the 12-module reference these end up as chapters 17–22.
-- Every user-facing step should include a screenshot reference or `\ugScreenshotPlaceholder`.
-- Button, field, and menu references must use the template's inline commands: `\ugButton{...}`, `\ugField{...}`, `\ugMenu{...}`, `\ugKey{...}`, `\ugRole{...}`, `\ugStatus{<colorMacro>}{Label}`.
-- Inline UI labels must be rendered from browser/Playwright-captured screenshots, not synthetic drawings, text styling, or hand-made approximations.
-- The template's structure and section order are the source of truth; do not invent a different hierarchy unless the user explicitly asks for one.
-
-The bundled `userguide.sty` should already include tectonic-safe adjustments, such as:
-- Unicode stubs instead of FontAwesome5 OTF loads
-- `\let\@ugLogoPath\empty` and `\let\@ugCoverImagePath\empty`
-- inline image macros for buttons / fields / menus
-- `\InputIfFileExists{ui-overrides.tex}{}{}` for project-specific overrides
-
-If the user supplies a ZIP template, normalize it into the skill workspace shape rather than inventing a new file hierarchy. The conversion rule is:
-- keep the ZIP's section ordering and placeholder content as the source of truth
-- mirror it into the skill workspace under the expected Hermes layout
-- preserve the repo's LaTeX semantics, but adapt file placement so the skill can operate consistently
-- if the user asks for a different structure, change only the final PDF's section organization, not the underlying template source format
-
-Do not patch `userguide.sty` for tectonic compatibility during each project. Keep the template stable and override only project-specific values.
-
----
+Bundled validators:
+- `scripts/screenshot-qa.mjs <docs-dir>` checks screenshot dimensions, loading-state metadata, crop categories, and `screenshots/manifest.json`.
+- `scripts/validate-guide-structure.mjs <docs-dir>` checks guide structure, stubs, UI macro wrapping, feature review progress, and common LaTeX content failures.
 
 ## Workflow
 
@@ -366,6 +295,8 @@ ls docs/screenshots/
 
 For every `\ugButton{X}`, `\ugField{Y}`, `\ugMenu{Z}` planned for the section files, capture the matching live UI element itself with Playwright `element.screenshot()` or a browser-tool screenshot of the live page. Use the exact UI label string from the app so the lookup hits the real control. The final PDF should show the UI control as a screenshot image when capture succeeds, not as styled text.
 
+For `\ugField{Y}` specifically, capture the visible field label together with its input/select/textarea, not the raw input box alone. Prefer the smallest form-field group containing the label and control. If the UI only exposes the input locator, compute a tight union crop from the input bounding box plus `label[for=...]`, a wrapping `<label>`, or the nearest visible label-like text directly above the control.
+
 Prefer tight crops or component-only shots for inline UI references; do not capture a full page just to extract a single label. Do not create synthetic UI assets with PIL, CSS mockups, or text-drawn surrogates.
 
 If a capture fails or the element cannot be isolated cleanly, fall back to the normal styled-text rendering from `\ugButtonOrig`, `\ugFieldOrig`, or `\ugMenuOrig`. Do not invent fake image assets just to preserve the screenshot workflow.
@@ -388,7 +319,8 @@ async function saveBtn(page, label) {
 async function saveField(page, label) {
   const el = page.getByLabel(new RegExp(label, 'i')).first();
   await el.waitFor({ state: 'visible', timeout: 5000 });
-  await el.screenshot({ path: `docs/ui/fields/${slug(label)}.png` });
+  const captured = await captureFieldWithLabel(page, el, `docs/ui/fields/${slug(label)}.png`);
+  if (!captured) await el.screenshot({ path: `docs/ui/fields/${slug(label)}.png` });
 }
 async function saveMenu(page, label) {
   const el = page.getByRole('link', { name: new RegExp(`^${label}$`, 'i') }).first();
