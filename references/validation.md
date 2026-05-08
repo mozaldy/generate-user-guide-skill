@@ -39,6 +39,7 @@ The structure validator checks:
 - wrapped UI references
 - troubleshooting, FAQ, glossary, and best-practice completeness
 - absence of common bundled template residue
+- `docs/.dummy-data-ledger.json` is drained (every entry deleted or marked `undeletableReason`); set `UG_ALLOW_LEDGER_LEAKS=1` for mid-iteration drafts
 
 The screenshot validator checks:
 - `docs/screenshots/manifest.json`
@@ -81,6 +82,9 @@ Before reporting completion, verify:
 - inline UI labels match the exact app labels
 - `docs/ui-overrides.tex` maps only real captured PNGs
 - every skipped capture has a reason
+- `docs/.dummy-data-ledger.json` is empty or every entry has `deleted: true` (or a documented `undeletableReason`)
+- target app's source code, config, and repo state were not modified by the run
+- every CRUD chapter shows the same agent-owned row across Create / Edit / Delete screenshots
 
 ## Final Report
 
