@@ -195,13 +195,15 @@ cp -R "$TEMPLATE_ROOT/img"             docs/
 ```
 
 After copy:
-- Open `docs/user-guide-<APP_SLUG>.tex` and update the `\input{sections/...}` list so it matches the **full-app module list discovered in Step 1**, not the entry route and not the template's example modules. Remove module file inputs that don't apply, add new ones for modules the example template doesn't cover, and **renumber the trailing chapters (Common Tasks through Appendix) so they continue sequentially after the last feature module**.
-- For each new module file, copy one of the existing Insight Doc modules (e.g. `06-versioning.tex` is a good short skeleton — 78 lines, 4 subsections; `05-document-management.tex` is a good long skeleton — 632 lines) and rewrite it for the target app.
-- Rename the trailing files to keep numbering contiguous. Examples:
-  - 1 feature module → `05-<feature>.tex`, then `06-common-tasks.tex` … `11-appendix.tex` (11 numbered chapters total).
-  - 5 feature modules → chapters 5–9, then `10-common-tasks.tex` … `15-appendix.tex` (15 numbered chapters total).
-  - 12 feature modules (bundled reference) → chapters 5–16, then `17-common-tasks.tex` … `22-appendix.tex` (22 numbered chapters total).
-- The final TOC must have at minimum: Document Control (unnumbered) + Introduction + System Overview + Getting Started + UI Overview + (≥1 feature chapter) + Common Tasks + Troubleshooting + FAQ + Best Practices + Glossary + Appendix.
+- Read `docs/MANIFEST.yaml` (copied from `template/MANIFEST.yaml`). It lists the section types this template ships and their order. Treat MANIFEST as the contract — never invent filenames not declared there.
+- Replace every `feature-module` entry in MANIFEST `sections[]` with one entry per **real feature module discovered in Step 1** for the target app. Keep `type: feature-module` (and pick `depth: complex` or `depth: simple` per module size). Drop the bundled reference's feature filenames; pick filenames from the target app's real module names.
+- Update `docs/user-guide-<APP_SLUG>.tex` so its `\input{sections/...}` list matches MANIFEST `sections[]` exactly, in order. Renumber the trailing non-feature chapters (the `common-tasks`, `troubleshooting`, `faq`, `best-practices`, `glossary`, `appendix` types — or whatever non-feature types MANIFEST currently lists) so numbering stays contiguous after the last feature module.
+- Rename the actual `.tex` files in `docs/sections/` to match the new MANIFEST entries. Examples (illustrating the *contiguous-numbering principle* — actual filenames come from MANIFEST + the target app's feature names):
+  - 1 feature module → 1 feature file numbered `05-…`, then trailing chapters `06-` through `11-` (≈11 numbered chapters total, depending on which non-feature types MANIFEST ships).
+  - 5 feature modules → chapters 5–9, then trailing chapters resume at `10-`.
+  - 12 feature modules (bundled reference) → chapters 5–16, then trailing chapters resume at `17-`.
+- For each new feature `.tex` file, copy a **same-`depth` skeleton from `template/sections/`** (a `complex` feature-module file in the bundled template for big modules, a `simple` one for small modules) and rewrite it for the target app.
+- The final TOC must contain every section type MANIFEST declares — never silently drop one because its file ended up empty.
 
 The LaTeX support files are already in the template. Do not rewrite them for tectonic compatibility — use the template as-is and override only project-specific values.
 
@@ -555,32 +557,36 @@ When the codebase walk reveals behavior the screenshot cannot show, write a shor
 
 **Note on `\ugErrorTable`:** every Troubleshooting section must contain at least three real `\ugError{message}{cause}{fix}` rows scoped to the target app. An empty `ugErrorTable` with only a header row is not acceptable output.
 
-**Section guidelines** — keep the template's richer section-by-section shape:
+**Section guidelines — driven by `template/MANIFEST.yaml`, NOT by hard-coded filenames.**
 
-- `00-metadata.tex` — fill app name, subtitle, version, company, classification, tagline, logo, and cover image fields with the **target app's** values (not the example template's defaults). The subtitle or tagline must state which role the guide is for, e.g. `User Guide — Super Admin`. The cover should make the role unambiguous.
-- `00-document-control.tex` — unnumbered preamble chapter (rendered before the TOC). One revision-history table and one approvals table. Single page only.
-- `01-introduction.tex` — purpose, problem statement, scope, intended audience, prerequisites, document conventions, how to use the guide, related documents, support channels. Multi-paragraph; not a stub.
-- `02-system-overview.tex` — what the system does, business objectives, key capabilities, system architecture, infrastructure components, user roles, security architecture, lifecycle, functional module map, data model, integration points, deployment model.
-- `03-getting-started.tex` — system requirements, accessing the application, first login, understanding your role, dashboard overview, language switch, logout/session, first-time navigation, browser tips. Use a `ugSteps` block when a flow has 4+ steps.
-- `04-ui-overview.tex` — main layout, sidebar navigation, common UI elements, status badges, modal dialogs, data grid operations, search syntax, keyboard shortcuts, accessibility.
-  - For the sidebar: write a short explanatory sentence and place one centered, narrow live crop of the sidebar or menu container. Never use a full-page dashboard screenshot to "show" the sidebar.
-  - The crop should show only the sidebar block and enough header/search/menu context to read it clearly.
-  - Use `tabularx` tables when describing region-by-region or menu-by-menu structure (see the bundled example for layout).
-- `05-<feature>.tex` … `NN-<feature>.tex` — one file per major feature module of the target app, numbered sequentially. Match the depth of the bundled `05-document-management.tex` (long, 632 lines, multiple subsections, multiple tabularx tables, business rules block) for complex modules; match `06-versioning.tex` (short, 78 lines, 4 subsections: Key Functions / Step-by-Step / Information Recorded / Business Rules) for simple modules. Each module file should include:
-  - `\begin{ugModule}{Overview}` block with **Purpose** and **Who Can Access** (`\ugRole{...}` pills).
-  - One or more `\subsection{}` blocks per page/screen inside the module — give every module at minimum 3 subsections.
-  - For data grids: a `tabularx` columns table with `\textbf{Column} / \textbf{Sortable} / \textbf{Description}` and one row per real column.
-  - For forms: a `tabularx` field table with `\ugField{Label} / Input type / Required / Description`.
-  - For container/card-based screens: a `\begin{ugModule}` or labeled subsection per container, each with **Purpose**, **What the code does**, **What it means**, **Step-by-step usage**, and **Expected result** — matching the depth of the reference PDF.
-  - One screenshot per container/state, captioned plainly.
-  - A final **Business Rules** subsection with bulleted constraints, validation, and access rules — every module file in the bundled example has one.
-  - Business rules / tips / warnings in `\begin{ugNote}` / `\begin{ugTip}` / `\begin{ugWarning}` blocks.
-- `<N+1>-common-tasks.tex` (`17-common-tasks.tex` in the bundled 12-module reference) — 3–6 `\begin{ugTask}{Task Title}` blocks. Each task must contain `\textbf{Objective:}`, `\begin{ugSteps} ... \end{ugSteps}`, and `\textbf{Expected Outcome:}` (or `\textbf{Tip:}` where appropriate). Use `\ugButton`/`\ugField`/`\ugMenu` references inside the steps. Do not collapse a multi-step task into a one-line "Click X" instruction.
-- `<N+2>-troubleshooting.tex` (`18-troubleshooting.tex` in the reference) — `\begin{ugErrorTable}` with at least three `\ugError{message}{cause}{fix}` rows tied to real failure modes the user is likely to hit (failed login, missing role, empty dashboard, permission denied, etc.).
-- `<N+3>-faq.tex` (`19-faq.tex` in the reference) — at minimum five `\ugFAQ{question}{multi-sentence answer}` entries derived from non-obvious behaviour discovered in Step 1. No empty answers.
-- `<N+4>-best-practices.tex` (`20-best-practices.tex` in the reference) — 3–6 `\begin{ugBestPractice}[Title]` boxes, each with a bulleted list (`itemize`) of concrete practices. Title belongs in `[brackets]`, not inside the body.
-- `<N+5>-glossary.tex` (`21-glossary.tex` in the reference) — `\ugGlossaryEntry{Term}{Definition.}` per domain-specific term. Every term must have a real definition sentence. Cover at minimum: every role name, every status label, the auth method (SSO/OAuth/etc.), and any UI noun the guide uses (Dashboard, Container, Module, Workspace, etc.).
-- `<N+6>-appendix.tex` (`22-appendix.tex` in the reference) — keyboard shortcuts, reference tables (status codes, transition rules, roles & permissions matrix, default config, supported browsers, tech stack, contact info). Include the live `BASE_URL`, support contact, and any environment-specific URLs.
+The reference template currently ships ~22 chapter files (`00-metadata.tex` … `22-appendix.tex`), but those filenames are an artifact of the v1 reference template and **will drift over time** as the template evolves. Do not assume the section list, ordering, or numbering is fixed.
+
+**Authoritative source:** `template/MANIFEST.yaml` in the bundled template defines, for the version of the template currently checked out:
+
+1. `sections[]` — the ordered list of chapter files this template ships, each tagged with a `type:` (e.g. `metadata`, `feature-module`, `troubleshooting`).
+2. `section_types{}` — the abstract content/quality contract per type (`must_contain`, `forbidden`, `depth_targets`, layout rules).
+
+**How to use it (every run):**
+
+1. Open `template/MANIFEST.yaml`. This is the contract for *this* template snapshot.
+2. For each entry in `sections[]`, populate the named `<file>.tex` by applying the rules of its declared `type` from `section_types{}`. Do not invent extra files. Do not skip files. Do not reorder.
+3. The `\input{}` order in `userguide-example.tex` must mirror `sections[]` exactly.
+4. For repeatable types (notably `feature-module`), MANIFEST will list one entry per real feature in the bundled reference. When generating for a different target app, **replace** those entries with one `feature-module` entry per real feature module of the target app — keep the type, swap the filenames and order. Never collapse multiple modules into a single chapter.
+5. If a section type referenced by `sections[]` is not defined in `section_types{}`, halt and surface the gap rather than guessing.
+
+**Quality rules per type live in MANIFEST**, not in this skill. The summary below is a fast reminder of the *shape* of the contract — always verify against MANIFEST before writing:
+
+- `metadata` / `document-control` — cover-page + preamble chapter; fill with target-app values, not template defaults.
+- `introduction` / `system-overview` / `getting-started` / `ui-overview` — multi-paragraph framing chapters; each has a checklist of subsections in MANIFEST.
+- `feature-module` — repeats once per real feature; needs `ugModule{Overview}` (Purpose + Who Can Access), at least 3 `\subsection{}` blocks, tabularx tables for grids/forms, container-by-container breakdown (Purpose / What the code does / What it means / Step-by-step usage / Expected result), and a final Business Rules subsection. Match `complex` depth (e.g. document management) for big modules, `simple` depth (e.g. versioning: Key Functions / Step-by-Step / Information Recorded / Business Rules) for small ones.
+- `common-tasks` — 3–6 `ugTask{}` blocks, each with `\textbf{Objective:}` + `ugSteps` + `\textbf{Expected Outcome:}`.
+- `troubleshooting` — `ugErrorTable` with ≥3 real `ugError{msg}{cause}{fix}` rows.
+- `faq` — ≥5 `ugFAQ{Q}{multi-sentence A}` entries derived from non-obvious behaviour found in Step 1.
+- `best-practices` — 3–6 `ugBestPractice[Title]` boxes wrapping `itemize` lists. Title in **[brackets]**, never in the body.
+- `glossary` — one `ugGlossaryEntry{Term}{Definition.}` per domain term; every role, status label, auth method, and UI noun must be covered.
+- `appendix` — keyboard shortcuts + reference tables + live `BASE_URL`, support contact, environment URLs.
+
+**If you find yourself writing a filename like `05-document-management.tex` or `17-common-tasks.tex` in the output without first having read it from MANIFEST, stop.** Those are reference-template artifacts. The target app's chapters get whatever filenames MANIFEST and the live feature inventory dictate.
 
 ---
 

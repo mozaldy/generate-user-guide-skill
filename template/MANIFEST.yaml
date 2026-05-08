@@ -1,0 +1,263 @@
+# MANIFEST.yaml — template contract for generate-user-guide skill
+#
+# This file is the source of truth for THIS template's section structure.
+# The skill reads this file to know which sections exist, in what order,
+# and what quality rules each section type must satisfy.
+#
+# When the template's section files change (rename, add, remove, reorder),
+# update this MANIFEST. The skill itself does not hard-code filenames —
+# it derives the chapter list from `sections[]` below and applies the
+# rules from `section_types{}` based on each section's `type`.
+#
+# Bumping `version` is recommended whenever `sections[]` changes shape.
+
+version: 1
+template_name: "generate-user-guide reference template (v1, 12-module DMS example)"
+
+# -----------------------------------------------------------------------
+# section_types — abstract content/quality contract per kind of chapter.
+#
+# A section type is defined ONCE here and referenced by `type:` on every
+# entry in `sections[]`. This is what lets the template grow / shrink
+# without rewriting the skill: add a new file with a known type and the
+# rules apply automatically; introduce a new type and add it here.
+# -----------------------------------------------------------------------
+section_types:
+
+  metadata:
+    purpose: "Cover/title page metadata for the target app."
+    must_contain:
+      - "App name, subtitle, version, company, classification, tagline filled with target app values (NOT template defaults)"
+      - "Subtitle or tagline states the role the guide is for (e.g. 'User Guide — Super Admin')"
+      - "Logo and cover image fields point at extracted target-app assets"
+    forbidden:
+      - "Bundled template defaults left in place"
+
+  document-control:
+    purpose: "Unnumbered preamble chapter rendered before the TOC."
+    must_contain:
+      - "One revision-history table"
+      - "One approvals table"
+    layout:
+      - "Single page only"
+
+  introduction:
+    purpose: "Why this guide exists and how to use it."
+    must_contain:
+      - "Purpose"
+      - "Problem statement"
+      - "Scope"
+      - "Intended audience"
+      - "Prerequisites"
+      - "Document conventions"
+      - "How to use the guide"
+      - "Related documents"
+      - "Support channels"
+    depth: "Multi-paragraph. Not a stub."
+
+  system-overview:
+    purpose: "What the system does at a system level."
+    must_contain:
+      - "What the system does"
+      - "Business objectives"
+      - "Key capabilities"
+      - "System architecture"
+      - "Infrastructure components"
+      - "User roles"
+      - "Security architecture"
+      - "Lifecycle"
+      - "Functional module map"
+      - "Data model"
+      - "Integration points"
+      - "Deployment model"
+
+  getting-started:
+    purpose: "First-run experience for the target role."
+    must_contain:
+      - "System requirements"
+      - "Accessing the application"
+      - "First login"
+      - "Understanding your role"
+      - "Dashboard overview"
+      - "Language switch (if app has one)"
+      - "Logout / session"
+      - "First-time navigation"
+      - "Browser tips"
+    rules:
+      - "Use a ugSteps block when a flow has 4+ steps"
+
+  ui-overview:
+    purpose: "Global UI grammar — apply once, reused by every feature chapter."
+    must_contain:
+      - "Main layout"
+      - "Sidebar navigation"
+      - "Common UI elements"
+      - "Status badges"
+      - "Modal / pop-up dialogs"
+      - "Data grid operations"
+      - "Search syntax"
+      - "Keyboard shortcuts"
+      - "Accessibility"
+    rules:
+      - "Sidebar: short explanatory sentence + ONE centered narrow live crop of the sidebar / menu container. Never a full-page dashboard screenshot."
+      - "Crop shows only sidebar block + enough header/search/menu context to read."
+      - "Use tabularx tables when describing region-by-region or menu-by-menu structure."
+
+  feature-module:
+    purpose: "One file per major feature module of the target app. Repeats."
+    must_contain:
+      - "ugModule{Overview} block with Purpose and Who Can Access (ugRole pills)"
+      - "At minimum 3 \\subsection{} blocks (one per page/screen inside the module)"
+      - "Final Business Rules subsection with bulleted constraints, validation, and access rules"
+    must_contain_when_applicable:
+      - "Data grid → tabularx columns table: Column / Sortable / Description, one row per real column"
+      - "Form → tabularx field table: ugField{Label} / Input type / Required / Description"
+      - "Container/card screen → ugModule or labeled subsection per container with Purpose / What the code does / What it means / Step-by-step usage / Expected result"
+      - "One screenshot per container/state, plainly captioned"
+      - "Business rules / tips / warnings in ugNote / ugTip / ugWarning blocks"
+    depth_targets:
+      complex: "Match 05-document-management.tex (long, multi-subsection, multiple tabularx tables, business rules block)."
+      simple:  "Match 06-versioning.tex (short, 4 subsections: Key Functions / Step-by-Step / Information Recorded / Business Rules)."
+    rules:
+      - "Numbered sequentially in chapter order."
+      - "Never collapse multiple modules into one generic chapter — even a 2-3 feature app gets one file per feature."
+
+  common-tasks:
+    purpose: "Cross-feature step-by-step tasks the target role does often."
+    must_contain:
+      - "3–6 ugTask{Task Title} blocks"
+      - "Each task: \\textbf{Objective:} + ugSteps{} + \\textbf{Expected Outcome:} (or \\textbf{Tip:} where fitting)"
+      - "Steps reference real UI via ugButton / ugField / ugMenu"
+    forbidden:
+      - "Collapsing a multi-step task into a one-line 'Click X' instruction"
+
+  troubleshooting:
+    purpose: "Recovery for real failure modes the user will hit."
+    must_contain:
+      - "ugErrorTable with at least three ugError{message}{cause}{fix} rows"
+      - "Rows tied to actual app failure modes (failed login, missing role, empty dashboard, permission denied, etc.)"
+    forbidden:
+      - "Empty ugErrorTable with only the header row"
+
+  faq:
+    purpose: "Non-obvious behaviour discovered in source-code walkthrough."
+    must_contain:
+      - "At least 5 ugFAQ{question}{multi-sentence answer} entries"
+    forbidden:
+      - "Empty answers (ugFAQ{Q}{})"
+
+  best-practices:
+    purpose: "Concrete habits that keep the user safe and efficient."
+    must_contain:
+      - "3–6 ugBestPractice[Title] boxes"
+      - "Each box wraps an itemize list of concrete practices"
+    rules:
+      - "Title goes in [brackets] (optional argument), NEVER inside the body — that produces the broken run-on layout."
+
+  glossary:
+    purpose: "Domain vocabulary the guide uses."
+    must_contain:
+      - "ugGlossaryEntry{Term}{Definition sentence.} per domain-specific term"
+      - "Every role name covered"
+      - "Every status label covered"
+      - "Auth method covered (SSO / OAuth / etc.)"
+      - "Every UI noun the guide uses (Dashboard, Container, Module, Workspace, etc.)"
+    forbidden:
+      - "Bare term names with no definition body"
+
+  appendix:
+    purpose: "Reference tables and environment-specific facts."
+    must_contain:
+      - "Keyboard shortcuts"
+      - "Status codes / transition rules / roles & permissions matrix / default config / supported browsers / tech stack / contact info (whichever apply)"
+      - "Live BASE_URL, support contact, environment-specific URLs"
+
+# -----------------------------------------------------------------------
+# sections — ordered list of chapter files this template currently ships.
+#
+# The skill reads this list to know which `\input{}` lines to emit in
+# userguide-example.tex and which files to populate. Each entry maps a
+# concrete filename to one of the abstract types above.
+#
+# To add a feature: append another `{type: feature-module}` entry.
+# To remove a chapter: delete the entry. To reorder: swap entries.
+# -----------------------------------------------------------------------
+sections:
+  - file: "00-metadata.tex"
+    type: metadata
+    numbered: false
+
+  - file: "00-document-control.tex"
+    type: document-control
+    numbered: false
+    rendered_before_toc: true
+
+  - file: "01-introduction.tex"
+    type: introduction
+
+  - file: "02-system-overview.tex"
+    type: system-overview
+
+  - file: "03-getting-started.tex"
+    type: getting-started
+
+  - file: "04-ui-overview.tex"
+    type: ui-overview
+
+  # -- feature modules (repeatable; one file per major feature) --------
+  - file: "05-document-management.tex"
+    type: feature-module
+    depth: complex
+
+  - file: "06-versioning.tex"
+    type: feature-module
+    depth: simple
+
+  - file: "07-approval-workflow.tex"
+    type: feature-module
+
+  - file: "08-document-preview.tex"
+    type: feature-module
+
+  - file: "09-secure-download.tex"
+    type: feature-module
+
+  - file: "10-share-links.tex"
+    type: feature-module
+
+  - file: "11-access-control.tex"
+    type: feature-module
+
+  - file: "12-audit-analytics.tex"
+    type: feature-module
+
+  - file: "13-dashboard-analytics.tex"
+    type: feature-module
+
+  - file: "14-ai-intelligence.tex"
+    type: feature-module
+
+  - file: "15-master-data.tex"
+    type: feature-module
+
+  - file: "16-lifecycle-management.tex"
+    type: feature-module
+  # --------------------------------------------------------------------
+
+  - file: "17-common-tasks.tex"
+    type: common-tasks
+
+  - file: "18-troubleshooting.tex"
+    type: troubleshooting
+
+  - file: "19-faq.tex"
+    type: faq
+
+  - file: "20-best-practices.tex"
+    type: best-practices
+
+  - file: "21-glossary.tex"
+    type: glossary
+
+  - file: "22-appendix.tex"
+    type: appendix
