@@ -107,6 +107,7 @@ Read these files as needed, not all at once:
 - `references/validation.md` before compiling, self-reviewing, or reporting completion.
 
 Bundled validators:
+- `node scripts/precompile-gates.mjs <docs-dir>` runs the three blocking pre-compile gates (logo extracted, colors customized, every referenced PNG exists). Run from the project working directory before xelatex/tectonic — see Step 9.
 - `scripts/screenshot-qa.mjs <docs-dir>` checks screenshot dimensions, loading-state metadata, crop categories, and `screenshots/manifest.json`.
 - `scripts/validate-guide-structure.mjs <docs-dir>` checks guide structure, stubs, UI macro wrapping, feature review progress, and common LaTeX content failures.
 - For draft review packets, run `UG_ALLOW_DRAFT_PROGRESS=1 scripts/validate-guide-structure.mjs <docs-dir>` so `drafted`/`reviewed` features can validate before user approval. For final delivery, omit the flag so only `approved` or `skipped` features pass.
@@ -195,13 +196,15 @@ cp -R "$TEMPLATE_ROOT/img"             docs/
 ```
 
 After copy:
-- Open `docs/user-guide-<APP_SLUG>.tex` and update the `\input{sections/...}` list so it matches the **full-app module list discovered in Step 1**, not the entry route and not the template's example modules. Remove module file inputs that don't apply, add new ones for modules the example template doesn't cover, and **renumber the trailing chapters (Common Tasks through Appendix) so they continue sequentially after the last feature module**.
-- For each new module file, copy one of the existing Insight Doc modules (e.g. `06-versioning.tex` is a good short skeleton — 78 lines, 4 subsections; `05-document-management.tex` is a good long skeleton — 632 lines) and rewrite it for the target app.
-- Rename the trailing files to keep numbering contiguous. Examples:
-  - 1 feature module → `05-<feature>.tex`, then `06-common-tasks.tex` … `11-appendix.tex` (11 numbered chapters total).
-  - 5 feature modules → chapters 5–9, then `10-common-tasks.tex` … `15-appendix.tex` (15 numbered chapters total).
-  - 12 feature modules (bundled reference) → chapters 5–16, then `17-common-tasks.tex` … `22-appendix.tex` (22 numbered chapters total).
-- The final TOC must have at minimum: Document Control (unnumbered) + Introduction + System Overview + Getting Started + UI Overview + (≥1 feature chapter) + Common Tasks + Troubleshooting + FAQ + Best Practices + Glossary + Appendix.
+- Read `docs/MANIFEST.yaml` (copied from `template/MANIFEST.yaml`). It lists the section types this template ships and their order. Treat MANIFEST as the contract — never invent filenames not declared there.
+- Replace every `feature-module` entry in MANIFEST `sections[]` with one entry per **real feature module discovered in Step 1** for the target app. Keep `type: feature-module` (and pick `depth: complex` or `depth: simple` per module size). Drop the bundled reference's feature filenames; pick filenames from the target app's real module names.
+- Update `docs/user-guide-<APP_SLUG>.tex` so its `\input{sections/...}` list matches MANIFEST `sections[]` exactly, in order. Renumber the trailing non-feature chapters (the `common-tasks`, `troubleshooting`, `faq`, `best-practices`, `glossary`, `appendix` types — or whatever non-feature types MANIFEST currently lists) so numbering stays contiguous after the last feature module.
+- Rename the actual `.tex` files in `docs/sections/` to match the new MANIFEST entries. Examples (illustrating the *contiguous-numbering principle* — actual filenames come from MANIFEST + the target app's feature names):
+  - 1 feature module → 1 feature file numbered `05-…`, then trailing chapters `06-` through `11-` (≈11 numbered chapters total, depending on which non-feature types MANIFEST ships).
+  - 5 feature modules → chapters 5–9, then trailing chapters resume at `10-`.
+  - 12 feature modules (bundled reference) → chapters 5–16, then trailing chapters resume at `17-`.
+- For each new feature `.tex` file, copy a **same-`depth` skeleton from `template/sections/`** (a `complex` feature-module file in the bundled template for big modules, a `simple` one for small modules) and rewrite it for the target app.
+- The final TOC must contain every section type MANIFEST declares — never silently drop one because its file ended up empty.
 
 The LaTeX support files are already in the template. Do not rewrite them for tectonic compatibility — use the template as-is and override only project-specific values.
 
@@ -473,114 +476,28 @@ Only map labels that have real browser-captured PNGs. If a label has no captured
 
 ### Step 8 — Write section files
 
-Replace each skeleton in `docs/sections/` with project-specific content incrementally. Write shared shell sections first (`00`–`04`), then write one feature-module chapter per approved iteration. Use the template's own section-by-section structure as the guide, especially where the template already breaks a section into deeper subtopics.
+Replace each skeleton in `docs/sections/` with project-specific content incrementally. Write shared shell sections first (the metadata / document-control / introduction / system-overview / getting-started / ui-overview chapters), then write one feature-module chapter per approved iteration.
+
+**Read `references/section-writing.md` before drafting any section.** It is the operational reference for: language rules, UI macro rules, full template-macro reference (`\ugButton`, `\ugField`, `\ugScreenshot`, `\ugTask`, `\ugBestPractice`, `\ugFAQ`, `\ugErrorTable`, `\ugGlossaryEntry` etc.) including the macro-specific gotchas (e.g. `\ugBestPractice[title-in-brackets]`, `\ugScreenshot` width is a multiplier not `\textwidth`), the **codebase-walk rule** (read the route/page/component/schema/API/data-layer/permission/side-effects code before describing any feature), the no-stub gate, and the per-type quick reference.
+
+**Section structure is driven by `template/MANIFEST.yaml`, NOT by hard-coded filenames.** MANIFEST defines, for the template currently checked out:
+
+1. `sections[]` — the ordered chapter list, each entry tagged with a `type:` (`metadata`, `feature-module`, `troubleshooting`, etc.).
+2. `section_types{}` — the abstract content/quality contract per type (`must_contain`, `forbidden`, `depth_targets`, layout rules).
+
+How to use it (every run):
+
+1. Open `template/MANIFEST.yaml`. This is the contract for the template snapshot in use.
+2. For each entry in `sections[]`, populate the named `<file>.tex` by applying the rules of its declared `type` from `section_types{}`. Do not invent extra files. Do not skip files. Do not reorder.
+3. The `\input{}` order in `userguide-example.tex` must mirror `sections[]` exactly.
+4. For repeatable types (notably `feature-module`), replace MANIFEST's reference entries with one `feature-module` entry per real feature module of the target app — keep the type, swap filenames and order. Never collapse multiple modules into a single chapter.
+5. If a section type referenced by `sections[]` is not defined in `section_types{}`, halt and surface the gap rather than guessing.
 
 **Iteration rule (non-negotiable):** in the first implementation pass after discovery, write only the shared chapters plus the first selected feature/user-flow chapter. Leave later feature files as pending only if they are not included in the current compiled review packet, or include a clear planned file list without compiling the final full guide. Do not ship a final PDF that silently omits discovered modules. For final compilation, every discovered module must have a real chapter or be explicitly marked `skipped` with a reason approved by the user.
 
-**Codebase-walk rule (non-negotiable — each feature must be explained from real code, not from the screenshot alone):** before writing any feature-module chapter or container description, read the actual source code for that feature. The screenshot shows surface UI; the code shows behavior, validation, side effects, and edge cases. Without the codebase walk the prose collapses to "this card shows data" filler.
+**TOC integrity (non-negotiable):** the TOC of the final PDF must mirror MANIFEST `sections[]` exactly. Do not let any section silently drop because its file ended up empty. Document control is a single page, followed by a new page for the rest of the guide.
 
-For each feature module / screen / container, locate and read:
-- the **route/page file** (`app/<route>/page.tsx`, `pages/<route>.tsx`, `src/app/<route>/`) — entry point, layout, what data it requests
-- the **component file(s)** rendered inside — props, state, conditional rendering, empty states, error states
-- the **form schema / validation** — Zod / Yup / react-hook-form rules: required fields, min/max, regex, custom validators
-- the **API route or server action** invoked on submit / load — `app/api/<x>/route.ts`, `server/<x>.ts`, tRPC procedure, GraphQL resolver
-- the **data layer** — Prisma model, SQL query, ORM call — what fields exist, what defaults, what relations
-- the **permission / role check** — middleware, `auth()`, RBAC guard — who can see this, who can act
-- the **side effects** — emails sent, audit log entries, webhooks fired, notifications triggered, files written
-- any **business-rule comments** or constants (`STATUS = ['draft','approved',...]`, `MAX_UPLOAD_SIZE`, retry counts, expiry windows)
-
-For every feature chapter, the prose must reflect what the code actually does:
-- list the **exact fields** the form sends, not paraphrased ones
-- list the **exact statuses / roles / states** the code defines, not invented ones
-- describe the **real outcome** of clicking each button (POST to which endpoint, which DB write, which redirect, which toast)
-- describe **error states** the code can produce (validation failures, 401/403/409/422 responses, server errors) and what the user sees for each
-- describe **empty states** and loading states the component renders
-- describe **permission gates** — what each role can / cannot do on this screen, sourced from the auth check
-- describe **side effects** that are not visible in the screenshot (audit log written, email sent, file moved, webhook fired)
-
-When the codebase walk reveals behavior the screenshot cannot show, write a short subsection or `\begin{ugNote}` block explaining it. A feature chapter that only restates what the screenshot shows is a stub — recapture the source-code findings in prose before shipping.
-
-**No-stub rule (non-negotiable):** every section file must ship with real, project-specific content. Do not output a section that contains only a heading, an empty table header, a bullet list of bare terms, or a placeholder note. The previous run of this skill failed because Troubleshooting shipped an empty `ugErrorTable` header, Glossary shipped term names without definitions, and Common Tasks were collapsed to one-line steps. Every section must look as substantive as the corresponding section in the bundled example template.
-
-**Layout rules (non-negotiable):**
-- Document control should be a single page, followed by a new page for the rest of the guide.
-- Keep the same broad chapter order as the template.
-- The TOC of the final PDF must mirror the chosen `userguide-example.tex` `\input{}` order. Do not let any section silently drop because its file is empty.
-- For chapters 5+, list one chapter entry per major feature module of the target app, numbered sequentially. **Never collapse multiple modules into a generic single chapter** — even a small app with 2–3 features must split each into its own `NN-<feature>.tex` file. The reference PDF demonstrates this pattern with 12 separate feature chapters (5: Document Management, 6: Versioning, 7: Approval Workflow, 8: Document Preview, 9: Secure Download, 10: Share Links, 11: Access Control, 12: Audit & Analytics, 13: Dashboard Analytics, 14: AI Intelligence, 15: Master Data, 16: Lifecycle Management).
-- If a chapter has multiple major subsections, keep the chapter title at the top of its new page and let the subsections continue below it.
-- Preserve the template's deeper subdivision pattern when the content naturally fits it.
-
-**Language rules (non-negotiable):**
-- Plain English or formal Indonesian, depending on the project/user request
-- No jargon unless the app itself uses that term in the UI
-- Avoid internal field names when a user-facing label exists
-- "pop-up window" not "modal/dialog"
-- "three-dot button (…)" not "actions menu"
-- Second person ("you", "your") throughout
-- Short sentences, active voice
-- Field descriptions: say what user should type, not what system stores
-- Container descriptions must answer **what the user sees, what it means, and what to do with it** — never a generic "this card shows data" sentence. Borrow the example template's pattern: Purpose → What the code/UI does → What it means → Step-by-step usage → Expected result.
-
-**Inline UI element rule:** when referencing a button / field / menu item, use the exact UI label string so the override lookup hits. `\ugButton{Save Section}` not `\ugButton{Save}`. If the actual UI label is awkward (e.g. `SRS Challenge Count`), use it as-is — the inline screenshot is the user's anchor; matching prose can describe it more naturally around the inline reference.
-
-**Template command reference:**
-
-| Need | Command |
-|------|---------|
-| Screenshot | `\ugScreenshot[0.9]{screenshots/NN-name.png}{Plain caption}` |
-| Numbered steps | `\begin{ugSteps} \item ... \end{ugSteps}` |
-| Info box | `\begin{ugNote}[Optional Title] ... \end{ugNote}` |
-| Tip | `\begin{ugTip} ... \end{ugTip}` |
-| Warning | `\begin{ugWarning} ... \end{ugWarning}` |
-| Button ref | `\ugButton{Save Section}` |
-| Field ref | `\ugField{Email}` |
-| Menu path | `\ugMenu{Documents > Document List}` |
-| Keyboard key | `\ugKey{Esc}` |
-| Role pill | `\ugRole{Admin}` |
-| Status pill | `\ugStatus{ugWarning}{Review}` |
-| Feature module | `\begin{ugModule}{Module Name} ... \end{ugModule}` |
-| Step-by-step task | `\begin{ugTask}{Task Title} ... \end{ugTask}` |
-| FAQ entry | `\ugFAQ{Question?}{Answer.}` |
-| Glossary entry | `\ugGlossaryEntry{Term}{Definition.}` |
-| Error table | `\begin{ugErrorTable} \ugError{msg}{cause}{fix} \end{ugErrorTable}` |
-| Best practice | `\begin{ugBestPractice}[Title] ... \end{ugBestPractice}` |
-
-**Note on `\ugScreenshot`:** the width argument is just the multiplier (`0.9`, not `0.9\textwidth`). The macro multiplies internally. For step-by-step screenshots, use smaller crops when the step is about a single control or button, and use wider shots when the user needs to understand layout or context.
-
-**Note on `\ugBestPractice`:** the title goes in **square brackets** as an optional argument: `\begin{ugBestPractice}[Use the correct role]`. Do not put the title inside the body or as a `{}` argument — that produces the broken "Use the correct role Always choose…" run-on layout.
-
-**Note on `\ugFAQ`:** both the question and the answer are required. Always include a real, multi-sentence answer. Do not ship `\ugFAQ{Question}{}`.
-
-**Note on `\ugGlossaryEntry`:** every entry needs a definition body. A bare term name is not a glossary entry — replace `\ugGlossaryEntry{SSO}{}` with `\ugGlossaryEntry{SSO}{Single Sign-On — a centralized login flow that lets one credential authenticate across multiple applications.}`.
-
-**Note on `\ugErrorTable`:** every Troubleshooting section must contain at least three real `\ugError{message}{cause}{fix}` rows scoped to the target app. An empty `ugErrorTable` with only a header row is not acceptable output.
-
-**Section guidelines** — keep the template's richer section-by-section shape:
-
-- `00-metadata.tex` — fill app name, subtitle, version, company, classification, tagline, logo, and cover image fields with the **target app's** values (not the example template's defaults). The subtitle or tagline must state which role the guide is for, e.g. `User Guide — Super Admin`. The cover should make the role unambiguous.
-- `00-document-control.tex` — unnumbered preamble chapter (rendered before the TOC). One revision-history table and one approvals table. Single page only.
-- `01-introduction.tex` — purpose, problem statement, scope, intended audience, prerequisites, document conventions, how to use the guide, related documents, support channels. Multi-paragraph; not a stub.
-- `02-system-overview.tex` — what the system does, business objectives, key capabilities, system architecture, infrastructure components, user roles, security architecture, lifecycle, functional module map, data model, integration points, deployment model.
-- `03-getting-started.tex` — system requirements, accessing the application, first login, understanding your role, dashboard overview, language switch, logout/session, first-time navigation, browser tips. Use a `ugSteps` block when a flow has 4+ steps.
-- `04-ui-overview.tex` — main layout, sidebar navigation, common UI elements, status badges, modal dialogs, data grid operations, search syntax, keyboard shortcuts, accessibility.
-  - For the sidebar: write a short explanatory sentence and place one centered, narrow live crop of the sidebar or menu container. Never use a full-page dashboard screenshot to "show" the sidebar.
-  - The crop should show only the sidebar block and enough header/search/menu context to read it clearly.
-  - Use `tabularx` tables when describing region-by-region or menu-by-menu structure (see the bundled example for layout).
-- `05-<feature>.tex` … `NN-<feature>.tex` — one file per major feature module of the target app, numbered sequentially. Match the depth of the bundled `05-document-management.tex` (long, 632 lines, multiple subsections, multiple tabularx tables, business rules block) for complex modules; match `06-versioning.tex` (short, 78 lines, 4 subsections: Key Functions / Step-by-Step / Information Recorded / Business Rules) for simple modules. Each module file should include:
-  - `\begin{ugModule}{Overview}` block with **Purpose** and **Who Can Access** (`\ugRole{...}` pills).
-  - One or more `\subsection{}` blocks per page/screen inside the module — give every module at minimum 3 subsections.
-  - For data grids: a `tabularx` columns table with `\textbf{Column} / \textbf{Sortable} / \textbf{Description}` and one row per real column.
-  - For forms: a `tabularx` field table with `\ugField{Label} / Input type / Required / Description`.
-  - For container/card-based screens: a `\begin{ugModule}` or labeled subsection per container, each with **Purpose**, **What the code does**, **What it means**, **Step-by-step usage**, and **Expected result** — matching the depth of the reference PDF.
-  - One screenshot per container/state, captioned plainly.
-  - A final **Business Rules** subsection with bulleted constraints, validation, and access rules — every module file in the bundled example has one.
-  - Business rules / tips / warnings in `\begin{ugNote}` / `\begin{ugTip}` / `\begin{ugWarning}` blocks.
-- `<N+1>-common-tasks.tex` (`17-common-tasks.tex` in the bundled 12-module reference) — 3–6 `\begin{ugTask}{Task Title}` blocks. Each task must contain `\textbf{Objective:}`, `\begin{ugSteps} ... \end{ugSteps}`, and `\textbf{Expected Outcome:}` (or `\textbf{Tip:}` where appropriate). Use `\ugButton`/`\ugField`/`\ugMenu` references inside the steps. Do not collapse a multi-step task into a one-line "Click X" instruction.
-- `<N+2>-troubleshooting.tex` (`18-troubleshooting.tex` in the reference) — `\begin{ugErrorTable}` with at least three `\ugError{message}{cause}{fix}` rows tied to real failure modes the user is likely to hit (failed login, missing role, empty dashboard, permission denied, etc.).
-- `<N+3>-faq.tex` (`19-faq.tex` in the reference) — at minimum five `\ugFAQ{question}{multi-sentence answer}` entries derived from non-obvious behaviour discovered in Step 1. No empty answers.
-- `<N+4>-best-practices.tex` (`20-best-practices.tex` in the reference) — 3–6 `\begin{ugBestPractice}[Title]` boxes, each with a bulleted list (`itemize`) of concrete practices. Title belongs in `[brackets]`, not inside the body.
-- `<N+5>-glossary.tex` (`21-glossary.tex` in the reference) — `\ugGlossaryEntry{Term}{Definition.}` per domain-specific term. Every term must have a real definition sentence. Cover at minimum: every role name, every status label, the auth method (SSO/OAuth/etc.), and any UI noun the guide uses (Dashboard, Container, Module, Workspace, etc.).
-- `<N+6>-appendix.tex` (`22-appendix.tex` in the reference) — keyboard shortcuts, reference tables (status codes, transition rules, roles & permissions matrix, default config, supported browsers, tech stack, contact info). Include the live `BASE_URL`, support contact, and any environment-specific URLs.
+**If you find yourself writing a filename without first reading it from MANIFEST, stop.** Reference-template filenames like `05-document-management.tex` or `17-common-tasks.tex` are artifacts of the bundled DMS example. The target app's chapters get whatever filenames MANIFEST and the live feature inventory dictate.
 
 ---
 
@@ -589,48 +506,12 @@ When the codebase walk reveals behavior the screenshot cannot show, write a shor
 **BLOCKING PRE-COMPILE CHECK — run this before xelatex/tectonic. Do NOT skip.**
 
 ```bash
-# Gate 1: logo must have been extracted (sentinel file created in Step 4a)
-if [ ! -f docs/.logo-verified ]; then
-  echo "ERROR: docs/.logo-verified not found."
-  echo "Go back to Step 4a: extract the target app's logo from the live web, save to docs/img/original-logo.png, then create docs/.logo-verified."
-  exit 1
-fi
-echo "OK: logo extracted ($(cat docs/.logo-verified))"
-
-# Gate 2: colors must have been extracted (bundled purple template not present)
-if grep -q "4A148C\|Purple Theme\|ugPrimary.*Deep purple" docs/userguide-colors.sty 2>/dev/null; then
-  echo "ERROR: userguide-colors.sty still contains bundled template colors (purple #4A148C)."
-  echo "Go back to Step 4b: extract the target app's brand colors from the live web and rewrite docs/userguide-colors.sty before compiling."
-  exit 1
-fi
-echo "OK: colors customized."
-
-# Gate 3: all PNG files referenced in section .tex files must exist
-MISSING=0
-for TEX_FILE in docs/sections/*.tex; do
-  while IFS= read -r match; do
-    PNG_PATH="docs/${match}"
-    if [ ! -f "$PNG_PATH" ]; then
-      echo "ERROR: missing image: $PNG_PATH (referenced in $TEX_FILE)"
-      MISSING=$((MISSING + 1))
-    fi
-  done < <(grep -oP '(?<=\\ugScreenshot\{)[^}]+' "$TEX_FILE" 2>/dev/null)
-  while IFS= read -r match; do
-    PNG_PATH="docs/${match}"
-    if [ ! -f "$PNG_PATH" ]; then
-      echo "ERROR: missing image: $PNG_PATH (referenced in $TEX_FILE)"
-      MISSING=$((MISSING + 1))
-    fi
-  done < <(grep -oP '(?<=\\includegraphics(\[[^\]]*\])?\{)[^}]+' "$TEX_FILE" 2>/dev/null)
-done
-if [ "$MISSING" -gt 0 ]; then
-  echo "ERROR: $MISSING missing PNG file(s). Fix paths or recapture before compiling. Missing images produce garbled text in the PDF."
-  exit 1
-fi
-echo "OK: all referenced images exist."
+node scripts/precompile-gates.mjs docs
 ```
 
-Gate 4 (dummy-data ledger drained) is enforced by `scripts/validate-guide-structure.mjs`. Set `UG_ALLOW_LEDGER_LEAKS=1` to bypass during mid-iteration draft compiles.
+This runs three gates: logo extracted (`docs/.logo-verified` sentinel), colors customized (no bundled template purple in `docs/userguide-colors.sty`), and every PNG referenced by `\ugScreenshot{...}` / `\includegraphics{...}` in `docs/sections/*.tex` actually exists. The script exits non-zero with a remediation hint on each failing gate.
+
+Gate 4 (dummy-data ledger drained) is enforced separately by `scripts/validate-guide-structure.mjs`. Set `UG_ALLOW_LEDGER_LEAKS=1` to bypass during mid-iteration draft compiles.
 
 If any check fails: stop, complete the failing step, re-run all checks, then compile.
 
