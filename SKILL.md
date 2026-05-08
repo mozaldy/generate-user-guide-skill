@@ -1,5 +1,5 @@
 ---
-name: generate-user-guide-skill
+name: generate-user-guide
 description: Generate end-user guides, user manuals, and documentation PDFs for web apps from a live route, credentials, source-code feature discovery, browser screenshots, and a LaTeX template. Use when Codex is asked to create a user guide/manual PDF, document a web app UI workflow, run /generate-user-guide, or iteratively document one feature/user flow at a time with review checkpoints; not for API docs, code docs, READMEs, or developer-facing documentation.
 ---
 
@@ -22,6 +22,7 @@ Optional:
 - `APP_NAME` - display name, default: infer from project
 - `COMPANY` - company name, default: blank
 - `SCOPE` - default: `entire-app`. Use `single-route` only when the user explicitly asks to document just the provided route.
+- `TARGET_ROLE` - role this guide is written for (e.g. `super-admin`, `admin`, `manager`, `operator`, `viewer`). Default: ask the user after Step 1 role discovery. The selected role drives which routes, modules, actions, and UI elements appear in the guide. One PDF per role — re-run for additional roles.
 - `MUTATIONS_ALLOWED` - default: `true`. When `true`, the agent may create/edit/delete records **it owns** per the Dummy Data Lifecycle below. When `false`, the agent never mutates anything (list/detail screenshots only — Create/Edit/Delete chapters fall back to "feature available; not captured in this revision").
 - `DUMMY_DATA_NOTES` - free-text intake the user can use to constrain naming (e.g. "use English company names", "avoid the word Test", "use vendor names from the seed list").
 
@@ -30,7 +31,25 @@ Template rule:
 - If it is blank, use this skill's bundled fallback template at `template/`.
 - If a ZIP/archive is provided, unpack it and normalize it into the same working shape.
 
-Derive `APP_SLUG` by lowercasing and hyphenating `APP_NAME`. Name outputs `docs/user-guide-<APP_SLUG>.tex` and `docs/user-guide-<APP_SLUG>.pdf`.
+Derive `APP_SLUG` by lowercasing and hyphenating `APP_NAME`. Derive `ROLE_SLUG` by lowercasing and hyphenating `TARGET_ROLE`. Name outputs `docs/user-guide-<APP_SLUG>-<ROLE_SLUG>.tex` and `docs/user-guide-<APP_SLUG>-<ROLE_SLUG>.pdf`. If the app has only one role (no role gates found), omit `-<ROLE_SLUG>` and fall back to `docs/user-guide-<APP_SLUG>.{tex,pdf}`.
+
+## Role-Based Scoping (Non-Negotiable)
+
+This skill produces **one PDF per role**. Most target apps gate routes, sidebar entries, actions, and form fields by role (Super Admin, Admin, Manager, Operator, Viewer, etc.). The same app shown to a Super Admin and to a Viewer is effectively two different products — collapsing them into one manual produces a guide that is wrong for every reader.
+
+Workflow:
+
+1. During Step 1 discovery, enumerate **every role** the codebase defines (auth guards, RBAC tables, middleware, permission constants, role-gated sidebar items, role-gated actions/fields). Record each role's accessible routes, modules, sidebar items, action buttons, and form fields.
+2. After Step 1, present the role list to the user and **ask which role this PDF is for**. Do not skip this question. Use the live web's role-selection screen (e.g. `/select-role`) as a cross-check that the discovered list is complete.
+3. Once `TARGET_ROLE` is chosen, scope every later step to that role:
+   - Login as a user with `TARGET_ROLE` for capture.
+   - Only document routes/modules the role can reach.
+   - Only document actions the role can perform on each screen.
+   - Mark gated-out features as out-of-scope in the inventory (do not silently omit them; record "not visible to <role>").
+   - The cover page, Getting Started, and System Overview must say which role the guide is for.
+4. To produce a guide for another role, re-run the skill with a different `TARGET_ROLE`. Each run produces its own PDF.
+
+If the app has no role gates (single-role app), set `TARGET_ROLE=default` and skip the role question. Note this assumption in `docs/guide-inventory.md`.
 
 ## Scope Rule (Non-Negotiable)
 
@@ -124,10 +143,13 @@ Return:
 - any domain-specific terms worth defining in a glossary
 - anything that commonly confuses new users (for FAQ + troubleshooting)
 - the full **module list** of the app — group routes/pages into named feature modules. This list drives the chapter-5+ feature-file split.
+- the full **role list** of the app — every role/permission identifier defined in code (RBAC tables, auth middleware, permission constants, role enums, role-gated sidebar/menu builders, `if (role === ...)` checks). For each role, record: display name, internal identifier, accessible routes, accessible sidebar/menu entries, role-gated actions (e.g. only Admin sees Delete), role-gated fields (e.g. only Super Admin sees `internalNotes`).
 
-Produce a numbered list of user flows AND a numbered list of feature modules before proceeding.
+Produce a numbered list of user flows, a numbered list of feature modules, AND a numbered list of roles (with per-role scope) before proceeding.
 
-Before writing any feature chapter, create `docs/guide-inventory.md` and `docs/guide-progress.json`. The inventory must include the full app scope assumption, the entry route, all discovered modules, and the intended chapter order. Stop at this checkpoint and ask the user to approve the plan before drafting the first feature unless the user explicitly requested no checkpoints.
+**Role-selection checkpoint (mandatory before drafting).** After producing the role list, stop and ask the user which role this PDF is for. Present the discovered roles as choices. Wait for the answer before continuing. Do not pick a role yourself unless the app has only one role. Once chosen, store `TARGET_ROLE` and `ROLE_SLUG`, and from this point forward filter every list (routes, modules, sidebar items, actions, fields) to what `TARGET_ROLE` can see/do.
+
+Before writing any feature chapter, create `docs/guide-inventory.md` and `docs/guide-progress.json`. The inventory must include the full app scope assumption, the entry route, **the selected `TARGET_ROLE` and the per-role scope (routes/modules/actions visible to that role, plus what is gated out)**, all discovered modules in scope, and the intended chapter order. Stop at this checkpoint and ask the user to approve the plan before drafting the first feature unless the user explicitly requested no checkpoints.
 
 ---
 
@@ -535,7 +557,7 @@ When the codebase walk reveals behavior the screenshot cannot show, write a shor
 
 **Section guidelines** — keep the template's richer section-by-section shape:
 
-- `00-metadata.tex` — fill app name, subtitle, version, company, classification, tagline, logo, and cover image fields with the **target app's** values (not the example template's defaults).
+- `00-metadata.tex` — fill app name, subtitle, version, company, classification, tagline, logo, and cover image fields with the **target app's** values (not the example template's defaults). The subtitle or tagline must state which role the guide is for, e.g. `User Guide — Super Admin`. The cover should make the role unambiguous.
 - `00-document-control.tex` — unnumbered preamble chapter (rendered before the TOC). One revision-history table and one approvals table. Single page only.
 - `01-introduction.tex` — purpose, problem statement, scope, intended audience, prerequisites, document conventions, how to use the guide, related documents, support channels. Multi-paragraph; not a stub.
 - `02-system-overview.tex` — what the system does, business objectives, key capabilities, system architecture, infrastructure components, user roles, security architecture, lifecycle, functional module map, data model, integration points, deployment model.
