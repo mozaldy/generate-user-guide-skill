@@ -22,6 +22,8 @@ Optional:
 - `APP_NAME` - display name, default: infer from project
 - `COMPANY` - company name, default: blank
 - `SCOPE` - default: `entire-app`. Use `single-route` only when the user explicitly asks to document just the provided route.
+- `MUTATIONS_ALLOWED` - default: `true`. When `true`, the agent may create/edit/delete records **it owns** per the Dummy Data Lifecycle below. When `false`, the agent never mutates anything (list/detail screenshots only — Create/Edit/Delete chapters fall back to "feature available; not captured in this revision").
+- `DUMMY_DATA_NOTES` - free-text intake the user can use to constrain naming (e.g. "use English company names", "avoid the word Test", "use vendor names from the seed list").
 
 Template rule:
 - If `TEMPLATE_SOURCE` is provided, use it.
@@ -46,6 +48,50 @@ Only produce a single-route guide when the user explicitly says one of:
 - "document `/x` only"
 
 If the scope is ambiguous, record the assumption in `docs/guide-inventory.md` as: "Scope: entire authenticated app; entry route: <TARGET_ROUTE>." Do not ask a clarifying question unless proceeding would risk using the wrong credentials, role, or production side effects.
+
+## Dummy Data Lifecycle (Non-Negotiable)
+
+The skill captures CRUD flows by creating its **own** dummy records, reusing the same record across the Create → Edit → Delete capture sequence, and deleting every record it created before reporting done. This is the only way the skill is allowed to mutate the target app.
+
+**Allowed mutations (only on records the agent itself created):**
+- `Create` / `Save` / `Submit` a new record using realistic-looking dummy values
+- `Edit` / `Update` that same record to capture the edit flow
+- `Delete` / `Archive` that same record to capture the delete flow and clean up
+
+**Forbidden mutations (always):**
+- Any Create/Edit/Delete/Approve/Publish/Send/Upload action against a **pre-existing** record. Pre-existing records are read-only references for list/detail screenshots only.
+- Any modification to the target app's source code, config, environment files, or repository state. The skill reads the codebase to understand behavior; it never writes to it.
+- Bulk operations, role/permission changes, billing actions, or anything that fans out to other users (emails, notifications, webhooks) — even on agent-created records — unless the user has explicitly authorized it.
+
+**Realistic naming.** Dummy records should look natural in screenshots ("Quarterly Sales Review", "Demo Customer ABC", "Acme Project") rather than carrying prefixes like `_GUIDE_DEMO_`. The ledger (below) is what makes cleanup safe — not the name.
+
+**Ledger (mandatory).** Maintain `docs/.dummy-data-ledger.json` while capturing. Every time the agent creates a record, append an entry **before** taking the screenshot:
+```json
+{
+  "createdAt": "2026-05-08T10:14:22Z",
+  "feature": "documents",
+  "entity": "Document",
+  "id": "abc-123",
+  "displayName": "Quarterly Sales Review",
+  "deleteRoute": "/documents/abc-123",
+  "deleteSelector": "button[aria-label='Delete']",
+  "deleted": false
+}
+```
+Set `deleted: true` only after the delete UI confirms removal. The ledger lets cleanup resume after a `/clear`, compaction, or crash — re-read it on resume and finish cleanup before drafting new chapters.
+
+**Cleanup rule (non-negotiable).** Before declaring a chapter `drafted`, every entry created for that chapter must be `deleted: true`. Before the final user-facing report, the entire ledger must be either empty or contain only `deleted: true` entries. If a record cannot be deleted via the UI (immutable audit log, completed workflow, etc.), record the reason in the ledger entry as `"undeletableReason": "..."` and surface it in the final report so the user can clean up manually.
+
+**Capture order per CRUD feature.**
+1. Navigate to the feature's list/index — screenshot the list **before** creating dummy data (shows real production state).
+2. Click `Create` / `Add` — screenshot the empty form.
+3. Fill the form with realistic dummy values — screenshot the filled form.
+4. Submit — screenshot the success toast and the new row in the list. Append to ledger.
+5. Click the dummy row → `Edit` — screenshot the edit form pre-filled.
+6. Change one field — screenshot the updated state and updated row in the list.
+7. Click `Delete` on the dummy row — screenshot the confirmation modal, then the post-delete list. Mark ledger entry `deleted: true`.
+
+If a feature exposes only some of these actions, capture the ones that exist and skip the rest. Never invent a Delete capture by deleting a real record.
 
 ## Review-Gated Iteration (Default Execution Model)
 
@@ -262,6 +308,10 @@ If `culori` is not installed: `npm install --no-save culori`. Or hand-roll a con
 
 Write `scripts/capture-screenshots.mjs` and use real browser captures for every page/state.
 
+**Mutation policy reminder.** Re-read the Dummy Data Lifecycle section at the top of this skill before writing the capture script. The script may only mutate **records the agent itself just created** and must update `docs/.dummy-data-ledger.json` for every Create. The script must never write to the target app's source code, config, or repo. If `MUTATIONS_ALLOWED=false`, the script captures list/detail views only and skips Create/Edit/Delete steps.
+
+**On resume after `/clear` or compaction.** Read `docs/.dummy-data-ledger.json` first. Any entry with `deleted: false` is leaked dummy data from a prior run — log into the app and delete those records before capturing anything new. If a record can no longer be found in the UI (already cleaned up manually, or reference broken), mark the ledger entry `deleted: true` with `"deletedNote": "not found on resume"` and continue.
+
 Rules:
 1. Use Chromium/Playwright for the actual screenshot capture. The browser may be driven by the Hermes browser tool or by Playwright in a script, but the final image must come from the live UI.
 2. Login: navigate to sign-in route → fill EMAIL/PASSWORD → submit → wait for redirect.
@@ -293,6 +343,38 @@ Rules:
    - For forms with type variants: open modal, select each type, screenshot each separately.
    - Save to `docs/screenshots/NN-descriptive-name.png` (zero-padded).
    - `console.log` each file saved.
+   - **CRUD capture lifecycle (when `MUTATIONS_ALLOWED=true`).** For each feature with Create/Edit/Delete:
+     1. Screenshot list **before** any mutation (real production state).
+     2. Open the create form → screenshot empty form.
+     3. Fill with realistic dummy values per `DUMMY_DATA_NOTES` (or sensible defaults — see below) → screenshot filled form.
+     4. Append a ledger entry to `docs/.dummy-data-ledger.json` **before** clicking submit. After submit, capture the returned `id` from the URL or success response and patch it into the entry.
+     5. Submit → screenshot success state and the new row in the list.
+     6. Open the same row → Edit → screenshot pre-filled edit form.
+     7. Change one realistic field → submit → screenshot updated state.
+     8. Delete the same row → screenshot the confirmation modal, click confirm, screenshot the post-delete list. Patch ledger entry `"deleted": true`.
+     9. If any step fails midway (e.g. delete blocked by validation), keep the ledger entry as-is with `"deleteFailed": "<reason>"` and surface it in the final report.
+   - **Realistic dummy values.** Use names that look natural in a screenshot — "Quarterly Sales Review", "Acme Corporation", "Demo Customer ABC". Avoid lorem ipsum, "test123", or `_GUIDE_DEMO_*` prefixes; the ledger is what makes cleanup safe, not the name. Honor any `DUMMY_DATA_NOTES` constraint from intake.
+   - **Ledger update pattern (Playwright snippet):**
+     ```js
+     import fs from 'fs/promises';
+     const LEDGER = 'docs/.dummy-data-ledger.json';
+     async function ledgerAdd(entry) {
+       const data = JSON.parse(await fs.readFile(LEDGER, 'utf8').catch(() => '[]'));
+       data.push({ ...entry, createdAt: new Date().toISOString(), deleted: false });
+       await fs.writeFile(LEDGER, JSON.stringify(data, null, 2));
+     }
+     async function ledgerMarkDeleted(id) {
+       const data = JSON.parse(await fs.readFile(LEDGER, 'utf8'));
+       const e = data.find(x => x.id === id);
+       if (e) e.deleted = true;
+       await fs.writeFile(LEDGER, JSON.stringify(data, null, 2));
+     }
+     ```
+   - **Forbidden mutations (always, regardless of `MUTATIONS_ALLOWED`):**
+     - Create/Edit/Delete against records the agent did not create
+     - Bulk operations, role/permission changes, billing actions
+     - Anything that fans out to other users (sending real emails/notifications/webhooks) — even on dummy records — unless the user explicitly authorized it
+     - Any write to the target app's source code, config, env files, or repo state
 
 When deciding what a container means, read the source code first. Use the component tree, route file, and layout files to identify the real structure and the intended label for each container before writing the explanation. Source code is only for route/structure discovery; it is not a substitute for the browser screenshot.
 
@@ -592,6 +674,23 @@ if [ "$MISSING" -gt 0 ]; then
   exit 1
 fi
 echo "OK: all referenced images exist."
+
+# Gate 4: dummy-data ledger must be drained (every entry deleted) before final compile.
+# For mid-iteration draft compiles, set UG_ALLOW_LEDGER_LEAKS=1 to bypass.
+if [ -f docs/.dummy-data-ledger.json ] && [ -z "${UG_ALLOW_LEDGER_LEAKS:-}" ]; then
+  LEAKED=$(node -e "
+    const d = JSON.parse(require('fs').readFileSync('docs/.dummy-data-ledger.json','utf8'));
+    const open = d.filter(e => !e.deleted && !e.undeletableReason);
+    if (open.length) { console.log(JSON.stringify(open, null, 2)); process.exit(0); }
+  " 2>/dev/null)
+  if [ -n "$LEAKED" ]; then
+    echo "ERROR: dummy-data ledger has undeleted entries:"
+    echo "$LEAKED"
+    echo "Log into the app and delete each one before final compile, or mark it 'undeletableReason' if it cannot be removed via the UI."
+    exit 1
+  fi
+  echo "OK: dummy-data ledger is clean."
+fi
 ```
 
 If any check fails: stop, complete the failing step, re-run all checks, then compile.
@@ -637,6 +736,9 @@ Before declaring success, open the compiled PDF (or grep the section files) and 
 - [ ] No garbled text (e.g. `FSdb...` letter-scramble) visible in any page. If found: the `\ugScreenshot` path at that location points to a PNG that does not exist — fix the path or recapture, then recompile.
 - [ ] Each dashboard container is captured separately and explained with Purpose / What it means / Step-by-step / Expected result, not a generic "this card shows data" sentence.
 - [ ] Every inline `\ugButton`, `\ugField`, `\ugMenu` uses the exact UI label string from the source code.
+- [ ] `docs/.dummy-data-ledger.json` is empty or every entry has `deleted: true` (or a documented `undeletableReason`). No leaked dummy records remain in the target app.
+- [ ] The target app's source code, config, and repo state were not modified by the skill. `git status` of the **target app's repo** (not this skill's repo) shows no changes attributable to the run. Capture scripts, ledger, and `docs/` artifacts live only in the working directory.
+- [ ] Every CRUD-flow chapter shows a Create → Edit → Delete sequence captured against an agent-owned record, not a pre-existing one. (Easy check: the row name in the create-screenshot matches the row name in the edit/delete screenshots.)
 
 If any check fails, fix the underlying file and recompile. Do not ship a guide with known stub sections.
 

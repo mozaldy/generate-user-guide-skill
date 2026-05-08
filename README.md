@@ -15,6 +15,26 @@ Works with any AI agent that can read files and run shell commands: Claude Code,
 
 ---
 
+## How it handles your data
+
+The skill captures CRUD flows by creating its **own** dummy records, reusing the same record across the Create → Edit → Delete capture sequence, then deleting every record before reporting done. A ledger at `docs/.dummy-data-ledger.json` tracks every record the agent creates so cleanup survives `/clear`, compaction, or crashes.
+
+**Will:**
+- Create dummy records with realistic-looking names ("Quarterly Sales Review", "Acme Corporation") on the target app
+- Edit and delete those same records to capture the full CRUD lifecycle
+- Read pre-existing data for list/detail screenshots (read-only)
+- Read your codebase to understand feature behavior
+
+**Will not:**
+- Edit or delete any record the agent did not create itself
+- Send real emails/notifications/webhooks (unless you explicitly authorize it)
+- Modify the target app's source code, config, env files, or repo state
+- Run bulk operations, role/permission changes, or billing actions
+
+If you need a fully read-only run (no writes whatsoever), set `MUTATIONS_ALLOWED: false` in the prompt config — the agent will skip Create/Edit/Delete captures and note "feature available; not captured in this revision" in those chapters.
+
+---
+
 ## Requirements
 
 On the machine where the agent runs:
@@ -64,6 +84,10 @@ Config:
 - Working dir: YOUR_PROJECT_PATH
 - Skill path: YOUR_SKILL_PATH
 - LANGUAGE: [your language, e.g. "Bahasa Indonesia" or "English"]
+- MUTATIONS_ALLOWED: true   # set to false for fully read-only run
+- DUMMY_DATA_NOTES: [optional naming constraints, e.g. "use English company names", "avoid the word Test"]
+
+Data handling: the agent will create its own dummy records to capture Create/Edit/Delete flows, reuse the same record across the lifecycle, and delete every record it created before reporting done. It tracks every creation in docs/.dummy-data-ledger.json so cleanup survives compaction. It will NOT mutate any record it did not create itself, and will NOT modify the target app's source code or repo state.
 
 BLOCKING — complete before any screenshots:
 
@@ -143,5 +167,9 @@ The agent copies `template/` into `YOUR_PROJECT_PATH/docs/`, then overwrites:
 | Wrong logo | `docs/.logo-verified` sentinel — build exits 1 if missing |
 | Purple template colors | Gate 2 greps for `#4A148C` — build exits 1 if found |
 | Missing PNG files | Gate 3 checks every `\ugScreenshot` path — build exits 1 with list |
+| Leaked dummy data | Gate 4 scans `docs/.dummy-data-ledger.json` — final compile exits 1 if any entry is `deleted: false` and lacks an `undeletableReason` |
+| Mutating real records | Step 5 only permits Create/Edit/Delete on records the agent itself created and logged in the ledger |
+| Modifying target codebase | Step 10 self-review checks `git status` of the target app's repo for unintended changes |
+| Resume after compaction | Re-read `docs/.dummy-data-ledger.json` and clean up any leaked records before drafting new chapters |
 | Full-page screenshots | Step 5 enforces width limits: container ≤ 0.85, sidebar ≤ 0.5, max 0.95 |
 | Garbled text in PDF | Symptom of a missing PNG — Step 5 documents the fix |
