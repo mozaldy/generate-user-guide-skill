@@ -107,7 +107,7 @@ Read these files as needed, not all at once:
 - `references/validation.md` before compiling, self-reviewing, or reporting completion.
 
 Bundled validators:
-- `bash scripts/precompile-gates.sh` runs the three blocking pre-compile gates (logo extracted, colors customized, every referenced PNG exists). Run from the project working directory before xelatex/tectonic — see Step 9.
+- `node scripts/precompile-gates.mjs <docs-dir>` runs the three blocking pre-compile gates (logo extracted, colors customized, every referenced PNG exists). Run from the project working directory before xelatex/tectonic — see Step 9.
 - `scripts/screenshot-qa.mjs <docs-dir>` checks screenshot dimensions, loading-state metadata, crop categories, and `screenshots/manifest.json`.
 - `scripts/validate-guide-structure.mjs <docs-dir>` checks guide structure, stubs, UI macro wrapping, feature review progress, and common LaTeX content failures.
 - For draft review packets, run `UG_ALLOW_DRAFT_PROGRESS=1 scripts/validate-guide-structure.mjs <docs-dir>` so `drafted`/`reviewed` features can validate before user approval. For final delivery, omit the flag so only `approved` or `skipped` features pass.
@@ -506,10 +506,10 @@ How to use it (every run):
 **BLOCKING PRE-COMPILE CHECK — run this before xelatex/tectonic. Do NOT skip.**
 
 ```bash
-bash scripts/precompile-gates.sh
+node scripts/precompile-gates.mjs docs
 ```
 
-This runs three gates: logo extracted (`docs/.logo-verified` sentinel), colors customized (no bundled template purple in `docs/userguide-colors.sty`), and every PNG referenced by `\ugScreenshot{...}` / `\includegraphics{...}` in `docs/sections/*.tex` actually exists. The script exits non-zero with a remediation hint on the first failing gate.
+This runs three gates: logo extracted (`docs/.logo-verified` sentinel), colors customized (no bundled template purple in `docs/userguide-colors.sty`), and every PNG referenced by `\ugScreenshot{...}` / `\includegraphics{...}` in `docs/sections/*.tex` actually exists. The script exits non-zero with a remediation hint on each failing gate.
 
 Gate 4 (dummy-data ledger drained) is enforced separately by `scripts/validate-guide-structure.mjs`. Set `UG_ALLOW_LEDGER_LEAKS=1` to bypass during mid-iteration draft compiles.
 
