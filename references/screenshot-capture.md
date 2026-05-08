@@ -2,6 +2,8 @@
 
 Use Playwright/Chromium for all final screenshots. Source code identifies what to capture; the browser supplies the actual image.
 
+For Create/Edit/Delete captures, follow `references/dummy-data.md` — the agent must create its own dummy records, reuse the same record across the lifecycle, log every creation in `docs/.dummy-data-ledger.json`, and delete every record before final compile. Never mutate a pre-existing record. Never modify the target app's codebase.
+
 ## App-Ready Gate
 
 Do not capture after a best-effort `networkidle` alone. Implement a blocking readiness helper and call it before every screenshot.

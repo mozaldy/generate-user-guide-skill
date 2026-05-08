@@ -5,6 +5,7 @@ import path from "node:path";
 const docsDir = process.argv[2] || "docs";
 const sectionsDir = path.join(docsDir, "sections");
 const allowDraftProgress = process.env.UG_ALLOW_DRAFT_PROGRESS === "1";
+const allowLedgerLeaks = process.env.UG_ALLOW_LEDGER_LEAKS === "1";
 
 let failed = false;
 
@@ -187,6 +188,28 @@ if (!fs.existsSync(progressPath)) {
     }
   } catch (err) {
     error(`docs/guide-progress.json is not valid JSON: ${err.message}`);
+  }
+}
+
+const ledgerPath = path.join(docsDir, ".dummy-data-ledger.json");
+if (fs.existsSync(ledgerPath)) {
+  try {
+    const ledger = JSON.parse(read(ledgerPath));
+    if (!Array.isArray(ledger)) {
+      error("docs/.dummy-data-ledger.json must be a JSON array.");
+    } else {
+      const open = ledger.filter((entry) => !entry.deleted && !entry.undeletableReason);
+      if (open.length && !allowLedgerLeaks) {
+        const list = open.map((entry) => `${entry.feature || "?"}/${entry.displayName || entry.id || "?"}`).join(", ");
+        error(`dummy-data ledger has undeleted entries: ${list}. Delete them via the UI or set UG_ALLOW_LEDGER_LEAKS=1 for draft compiles.`);
+      } else if (open.length) {
+        ok(`dummy-data ledger has ${open.length} undeleted entry(ies); leak bypass enabled.`);
+      } else {
+        ok("dummy-data ledger is clean.");
+      }
+    }
+  } catch (err) {
+    error(`docs/.dummy-data-ledger.json is not valid JSON: ${err.message}`);
   }
 }
 

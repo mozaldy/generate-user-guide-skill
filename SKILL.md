@@ -22,6 +22,8 @@ Optional:
 - `APP_NAME` - display name, default: infer from project
 - `COMPANY` - company name, default: blank
 - `SCOPE` - default: `entire-app`. Use `single-route` only when the user explicitly asks to document just the provided route.
+- `MUTATIONS_ALLOWED` - default: `true`. When `true`, the agent may create/edit/delete records **it owns** per the Dummy Data Lifecycle below. When `false`, the agent never mutates anything (list/detail screenshots only — Create/Edit/Delete chapters fall back to "feature available; not captured in this revision").
+- `DUMMY_DATA_NOTES` - free-text intake the user can use to constrain naming (e.g. "use English company names", "avoid the word Test", "use vendor names from the seed list").
 
 Template rule:
 - If `TEMPLATE_SOURCE` is provided, use it.
@@ -46,6 +48,14 @@ Only produce a single-route guide when the user explicitly says one of:
 - "document `/x` only"
 
 If the scope is ambiguous, record the assumption in `docs/guide-inventory.md` as: "Scope: entire authenticated app; entry route: <TARGET_ROUTE>." Do not ask a clarifying question unless proceeding would risk using the wrong credentials, role, or production side effects.
+
+## Dummy Data Lifecycle (Non-Negotiable)
+
+CRUD captures use records the **agent created itself**, reused across Create → Edit → Delete, then deleted before reporting done. Mutating any pre-existing record is forbidden. Modifying the target app's source code, config, or repo state is forbidden. `MUTATIONS_ALLOWED=false` disables all mutations and falls back to list/detail screenshots only.
+
+The ledger at `docs/.dummy-data-ledger.json` tracks every creation so cleanup survives `/clear`, compaction, and crashes. `scripts/validate-guide-structure.mjs` enforces a clean ledger as a precompile gate (use `UG_ALLOW_LEDGER_LEAKS=1` for mid-iteration drafts).
+
+Read `references/dummy-data.md` before writing capture scripts or resuming a run.
 
 ## Review-Gated Iteration (Default Execution Model)
 
@@ -73,6 +83,7 @@ Set `docs/guide-progress.json` feature statuses as `pending`, `drafted`, `review
 Read these files as needed, not all at once:
 - `references/source-discovery.md` before planning content or asking feature-scope questions.
 - `references/screenshot-capture.md` before writing or running Playwright capture scripts.
+- `references/dummy-data.md` before any Create/Edit/Delete capture, and on resume after `/clear` or compaction.
 - `references/section-writing.md` before editing `docs/sections/*.tex` or preparing review packets.
 - `references/validation.md` before compiling, self-reviewing, or reporting completion.
 
@@ -262,6 +273,8 @@ If `culori` is not installed: `npm install --no-save culori`. Or hand-roll a con
 
 Write `scripts/capture-screenshots.mjs` and use real browser captures for every page/state.
 
+**Mutation policy.** Read `references/dummy-data.md` before writing the capture script. On resume after `/clear` or compaction, drain `docs/.dummy-data-ledger.json` (delete leaked records) before capturing anything new.
+
 Rules:
 1. Use Chromium/Playwright for the actual screenshot capture. The browser may be driven by the Hermes browser tool or by Playwright in a script, but the final image must come from the live UI.
 2. Login: navigate to sign-in route → fill EMAIL/PASSWORD → submit → wait for redirect.
@@ -293,6 +306,7 @@ Rules:
    - For forms with type variants: open modal, select each type, screenshot each separately.
    - Save to `docs/screenshots/NN-descriptive-name.png` (zero-padded).
    - `console.log` each file saved.
+   - **CRUD capture lifecycle.** When `MUTATIONS_ALLOWED=true`, follow the Create → Edit → Delete sequence on agent-owned records and update the ledger at every Create/Delete. Full pattern, helper code, and forbidden-mutation list in `references/dummy-data.md`. When `MUTATIONS_ALLOWED=false`, capture list/detail views only.
 
 When deciding what a container means, read the source code first. Use the component tree, route file, and layout files to identify the real structure and the intended label for each container before writing the explanation. Source code is only for route/structure discovery; it is not a substitute for the browser screenshot.
 
@@ -594,6 +608,8 @@ fi
 echo "OK: all referenced images exist."
 ```
 
+Gate 4 (dummy-data ledger drained) is enforced by `scripts/validate-guide-structure.mjs`. Set `UG_ALLOW_LEDGER_LEAKS=1` to bypass during mid-iteration draft compiles.
+
 If any check fails: stop, complete the failing step, re-run all checks, then compile.
 
 ```bash
@@ -637,6 +653,7 @@ Before declaring success, open the compiled PDF (or grep the section files) and 
 - [ ] No garbled text (e.g. `FSdb...` letter-scramble) visible in any page. If found: the `\ugScreenshot` path at that location points to a PNG that does not exist — fix the path or recapture, then recompile.
 - [ ] Each dashboard container is captured separately and explained with Purpose / What it means / Step-by-step / Expected result, not a generic "this card shows data" sentence.
 - [ ] Every inline `\ugButton`, `\ugField`, `\ugMenu` uses the exact UI label string from the source code.
+- [ ] Dummy-data and codebase-mutation checks pass — see `references/validation.md` self-review section.
 
 If any check fails, fix the underlying file and recompile. Do not ship a guide with known stub sections.
 
