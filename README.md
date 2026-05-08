@@ -8,10 +8,12 @@ Works with any AI agent that can read files and run shell commands: Claude Code,
 
 ## What it produces
 
-- Multi-chapter PDF user guide (22 chapters: intro → features → troubleshooting → appendix)
+- Multi-chapter PDF user guide (introduction → features → troubleshooting → appendix), one PDF per role
 - Screenshots captured per-container via Playwright (no full-page dumps)
-- Brand colors and logo extracted from the live app — not the purple template default
+- Brand colors and logo extracted from the live app — not the template default
 - Full content in any language (e.g. Bahasa Indonesia)
+
+The chapter list, ordering, and numbering are driven by `template/MANIFEST.yaml` plus the real feature modules the agent discovers in your codebase. Different apps produce different chapter counts.
 
 ---
 
@@ -59,17 +61,17 @@ npx playwright install chromium
    mkdir -p /your/path/my-project
    ```
 
-3. The agent copies template files into `docs/` inside the working directory automatically during Step 1 of SKILL.md.
+The agent copies template files into `docs/` inside the working directory automatically when you invoke the skill.
 
 ---
 
 ## How to prompt
 
-Two prompts, that's it. Replace every `YOUR_*` placeholder with real values.
+You don't need to know the internal workflow. The skill drives discovery, role selection, theming, capture, review checkpoints, and compilation by itself. Just hand it the config.
 
-### Prompt 1 — Initial setup + first chapter
+### Prompt 1 — Start a guide
 
-Send once. The agent sets up the full 22-chapter structure, writes chapters 1–5 fully, and leaves 6–16 as placeholders.
+Send once. The agent discovers your app's modules, asks which role the PDF is for (if the app has multiple roles), and works through the guide one feature at a time with review checkpoints between each.
 
 ```
 Use the skill at YOUR_SKILL_PATH/SKILL.md to generate a user guide for YOUR_APP_NAME.
@@ -86,53 +88,23 @@ Config:
 - LANGUAGE: [your language, e.g. "Bahasa Indonesia" or "English"]
 - MUTATIONS_ALLOWED: true   # set to false for fully read-only run
 - DUMMY_DATA_NOTES: [optional naming constraints, e.g. "use English company names", "avoid the word Test"]
-
-Data handling: the agent will create its own dummy records to capture Create/Edit/Delete flows, reuse the same record across the lifecycle, and delete every record it created before reporting done. It tracks every creation in docs/.dummy-data-ledger.json so cleanup survives compaction. It will NOT mutate any record it did not create itself, and will NOT modify the target app's source code or repo state.
-
-BLOCKING — complete before any screenshots:
-
-Step 4a (mandatory):
-- Navigate to BASE_URL
-- element.screenshot() the logo <img> in the top-left only (not full page)
-- Save to docs/img/original-logo.png and docs/img/white-logo.png
-- Write "extracted from: BASE_URL" to docs/.logo-verified
-
-Step 4b (mandatory):
-- Sample the app's brand colors from the live web (check tailwind.config.* or globals.css)
-- Rewrite docs/userguide-colors.sty with the app's colors — no purple, no #4A148C
-- Run the Step 9 gate check before compiling. Fix failures before proceeding.
-
-STRUCTURE — create all 22 chapters at once:
-- Chapters 1–4 (Introduction, System Overview, Getting Started, UI Overview): write fully
-- Chapter 5 ([first feature module]): write FULLY with screenshots and step-by-step
-- Chapters 6–16 ([remaining feature modules]): fill with placeholder: "This module will be documented in the next revision."
-- Chapters 17–22 (Common Tasks, Troubleshooting, FAQ, Best Practices, Glossary, Appendix): write basic skeleton, to be expanded after all features are done
-
-Compile when finished. Report the PDF path and which chapters are complete vs placeholder.
 ```
 
-> **Tip:** Before sending, list your app's sidebar modules in order so the agent numbers chapters correctly:
-> `Ch 5: Login → Ch 6: Dashboard → Ch 7: Reports → ...`
+The agent will pause at each review checkpoint. Approve or request changes — it continues only after approval.
 
----
+### Prompt "continue" — Resume the same guide
 
-### Prompt "continue" — Fill in the next chapter
-
-Copy-paste this each time you want to add the next feature chapter. The agent finds the lowest-numbered placeholder automatically.
+If the run was interrupted (compaction, crash, new session), point the agent back at the same working directory:
 
 ```
 Continue the YOUR_APP_NAME user guide at YOUR_PROJECT_PATH/docs/.
-
-Check docs/sections/ and find the lowest-numbered chapter that still contains the placeholder "will be documented in the next revision". Write that chapter FULLY following the Step 8 guidelines in SKILL.md:
-- Navigate to the relevant route at BASE_URL (log in first if needed)
-- Screenshot per container (not full page)
-- Write Purpose, Step-by-step, Business Rules table
-- All content text in [your language]
-
-Do not modify other chapters. Do not re-extract logo or colors (docs/.logo-verified already exists). Recompile when done. Report which chapter was completed and which placeholder is next.
 ```
 
-Repeat until all chapters are filled. Each run completes exactly one chapter and tells you what's next.
+The agent reads `docs/guide-progress.json` and `docs/.dummy-data-ledger.json` to figure out what's done, what's pending, and whether any dummy records need cleanup. It picks up at the next pending feature.
+
+### One PDF per role
+
+Most apps gate features by role. The skill produces **one PDF per role** — re-run with a different `TARGET_ROLE` for each role you need to document. The agent enumerates roles during discovery and asks which one this run is for.
 
 ---
 
@@ -140,8 +112,9 @@ Repeat until all chapters are filled. Each run completes exactly one chapter and
 
 ```
 generate-user-guide-skill/
-├── SKILL.md                      ← full step-by-step instructions for the agent
+├── SKILL.md                      ← full instructions for the agent
 └── template/
+    ├── MANIFEST.yaml             ← section list + per-section quality contract
     ├── userguide-example.tex     ← main LaTeX entry point (copied per project)
     ├── latex/
     │   ├── userguide.sty         ← master style loader
@@ -149,14 +122,16 @@ generate-user-guide-skill/
     │   ├── userguide-boxes.sty
     │   ├── userguide-tables.sty
     │   └── ...
-    ├── sections/                 ← 22 reference section files (copied per project)
+    ├── sections/                 ← reference section files (copied per project)
     └── img/                      ← placeholder images (replaced per app)
 ```
+
+`template/MANIFEST.yaml` is the source of truth for the template's section structure. To add or remove a section type, or to change the chapter contract, edit MANIFEST — not SKILL.md.
 
 The agent copies `template/` into `YOUR_PROJECT_PATH/docs/`, then overwrites:
 - `docs/userguide-colors.sty` — target app's brand colors
 - `docs/img/original-logo.png` + `docs/img/white-logo.png` — live logo
-- `docs/sections/NN-*.tex` — real content per chapter
+- `docs/sections/<chapter>.tex` — real content per chapter (filenames and count come from MANIFEST plus the discovered feature modules)
 
 ---
 
@@ -165,11 +140,11 @@ The agent copies `template/` into `YOUR_PROJECT_PATH/docs/`, then overwrites:
 | What | How |
 |------|-----|
 | Wrong logo | `docs/.logo-verified` sentinel — build exits 1 if missing |
-| Purple template colors | Gate 2 greps for `#4A148C` — build exits 1 if found |
-| Missing PNG files | Gate 3 checks every `\ugScreenshot` path — build exits 1 with list |
-| Leaked dummy data | Gate 4 scans `docs/.dummy-data-ledger.json` — final compile exits 1 if any entry is `deleted: false` and lacks an `undeletableReason` |
-| Mutating real records | Step 5 only permits Create/Edit/Delete on records the agent itself created and logged in the ledger |
-| Modifying target codebase | Step 10 self-review checks `git status` of the target app's repo for unintended changes |
-| Resume after compaction | Re-read `docs/.dummy-data-ledger.json` and clean up any leaked records before drafting new chapters |
-| Full-page screenshots | Step 5 enforces width limits: container ≤ 0.85, sidebar ≤ 0.5, max 0.95 |
-| Garbled text in PDF | Symptom of a missing PNG — Step 5 documents the fix |
+| Bundled template colors | Pre-compile gate greps for unmodified template colors — build exits 1 if found |
+| Missing PNG files | Pre-compile gate checks every `\ugScreenshot` path — build exits 1 with list |
+| Leaked dummy data | Final-compile gate scans `docs/.dummy-data-ledger.json` — exits 1 if any entry is `deleted: false` and lacks an `undeletableReason` |
+| Mutating real records | The agent only permits Create/Edit/Delete on records it created itself and logged in the ledger |
+| Modifying target codebase | Self-review checks `git status` of the target app's repo for unintended changes |
+| Resume after compaction | The agent re-reads `docs/.dummy-data-ledger.json` and cleans up any leaked records before drafting new chapters |
+| Full-page screenshots | Width limits enforced: container ≤ 0.85, sidebar ≤ 0.5, max 0.95 |
+| Garbled text in PDF | Symptom of a missing PNG — diagnostic guidance lives in SKILL.md |
