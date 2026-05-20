@@ -49,7 +49,9 @@ npx playwright install chromium
 
 ---
 
-## Setup
+## Install
+
+No per-agent install step. The skill is just a folder with `SKILL.md` at the root — any agent that can read files and run shell commands loads it by absolute path.
 
 1. Clone this repo somewhere the agent can read it:
    ```bash
@@ -60,6 +62,15 @@ npx playwright install chromium
    ```bash
    mkdir -p /your/path/my-project
    ```
+
+3. Point your agent at `SKILL.md` in the prompt (see [How to prompt](#how-to-prompt)). The `YOUR_SKILL_PATH` placeholder is the absolute path from step 1.
+
+### Per-agent notes
+
+- **Claude Code** — works from any path. For a globally available skill, you can also place the folder at `~/.claude/skills/generate-user-guide/` (or `.claude/skills/generate-user-guide/` inside a project) and Claude Code will auto-discover it; otherwise just reference the absolute path in the prompt.
+- **OpenClaw** — reference the absolute `SKILL.md` path in the prompt. No registration needed.
+- **Hermes** — reference the absolute `SKILL.md` path in the prompt. No registration needed.
+- **Any other agent** — same pattern: clone the repo, pass the absolute `SKILL.md` path in the prompt.
 
 The agent copies template files into `docs/` inside the working directory automatically when you invoke the skill.
 
